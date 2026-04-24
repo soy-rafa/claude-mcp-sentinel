@@ -3,6 +3,18 @@
 All notable changes to MCP Sentinel are recorded here. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/). Versioning is [semver](https://semver.org/).
 
+## [2.0.1] — 2026-04-24
+
+### Fixed
+
+- **Hook output compatibility with Claude Code ≥ 2.1.x.** The root-level
+  `decision` field enum changed from `"allow"` to `"approve"` in Claude Code
+  2.1.x. The hook was outputting `"allow"`, which caused a JSON schema
+  validation error (`(root): Invalid input`) on every tool call — even benign
+  ones. The script now detects the installed Claude Code version at startup
+  (via `claude --version`, result cached with `lru_cache`) and emits `"approve"`
+  for ≥ 2.1.0 or `"allow"` for older versions. Fully backwards-compatible.
+
 ## [2.0.0] — 2026-04-17
 
 This release turns Sentinel from a static analyzer into a runtime guard. The v1
