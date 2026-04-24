@@ -14,7 +14,9 @@ Protocol: Claude Code passes the tool call payload on stdin and expects a JSON
 response on stdout. Exit 0 always; the "decision" field controls behavior.
 
 Decision values:
-  "allow"  — tool call proceeds normally. No message added to context.
+  "approve" / "allow"  — tool call proceeds normally. No message added to context.
+                         Claude Code >= 2.1.x uses "approve"; older versions use "allow".
+                         The script detects the version automatically.
   "deny"   — tool call blocked. "reason" is shown to the user and Claude.
   "warn"   — tool call proceeds but with a warning message in context.
 
@@ -31,8 +33,41 @@ Usage (registered via install_hooks.sh, or manually):
 import json
 import os
 import re
+import subprocess
 import sys
+from functools import lru_cache
 from pathlib import Path
+
+
+# Claude Code changed the root-level "decision" enum from "allow"→"approve"
+# somewhere in the 2.1.x series. 2.1.119 confirmed requires "approve".
+# Older versions (1.x / early 2.x) required "allow".
+_APPROVE_MIN_VERSION = (2, 1, 0)
+
+
+@lru_cache(maxsize=1)
+def _claude_version():
+    """Return Claude Code version as (major, minor, patch) or None. Cached."""
+    version_str = os.environ.get("CLAUDE_CODE_VERSION", "")
+    if not version_str:
+        try:
+            result = subprocess.run(
+                ["claude", "--version"],
+                capture_output=True, text=True, timeout=2,
+            )
+            version_str = result.stdout.strip()
+        except Exception:
+            return None
+    m = re.search(r"(\d+)\.(\d+)\.(\d+)", version_str)
+    return tuple(int(x) for x in m.groups()) if m else None
+
+
+def _allow_value():
+    """Return the correct root-level 'allow' decision string for this Claude version."""
+    version = _claude_version()
+    if version is None or version >= _APPROVE_MIN_VERSION:
+        return "approve"
+    return "allow"
 
 
 def load_iocs():
@@ -272,13 +307,13 @@ def main():
     except json.JSONDecodeError:
         # If stdin is not JSON, err on the side of allowing — we don't want to
         # break Claude Code because of our hook.
-        print(json.dumps({"decision": "allow"}))
+        print(json.dumps({"decision": _allow_value()}))
         return
 
     decision, reason = decide(payload)
 
     if decision == "allow":
-        print(json.dumps({"decision": "allow"}))
+        print(json.dumps({"decision": _allow_value()}))
         return
 
     tool_name = payload.get("tool_name") or payload.get("tool", "<unknown>")
@@ -304,7 +339,7 @@ def main():
             f"Reason: {reason}"
         )
         print(json.dumps({
-            "decision": "allow",
+            "decision": _allow_value(),
             "reason": message,
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
