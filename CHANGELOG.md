@@ -3,6 +3,27 @@
 All notable changes to MCP Sentinel are recorded here. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/). Versioning is [semver](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- **Hook decision compatibility with Claude Code >= 2.1.x.** The root-level
+  `decision` enum changed from `"allow"` to `"approve"` in the 2.1.x series
+  (2.1.119 confirmed). The hook now auto-detects the installed Claude Code
+  version and emits the correct value, falling back to `"approve"` when the
+  version cannot be determined.
+
+### Added
+
+- **Disk-cached version detection** at `${XDG_CACHE_HOME:-~/.cache}/mcp-sentinel/claude_version`
+  with a 1-day TTL and atomic writes, so the `claude --version` subprocess
+  only runs once per day instead of on every tool call.
+- **Cross-platform binary resolution** via `shutil.which("claude")`, so the
+  hook finds Windows `.cmd`/`.bat` wrappers without `shell=True`.
+- **`CLAUDE_CODE_VERSION` env var override** for tests/CI, bypassing both
+  the disk cache and the subprocess.
+- Executable bit on `hooks/sentinel_preflight.py`.
+
 ## [2.0.0] — 2026-04-17
 
 This release turns Sentinel from a static analyzer into a runtime guard. The v1
