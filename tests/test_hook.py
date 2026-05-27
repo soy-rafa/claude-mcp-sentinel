@@ -52,6 +52,10 @@ def expect(name, payload, expected_decision, expected_substr=None, stdin_overrid
     decision = resp.get("decision", "<missing>")
     if expected_decision == "deny":
         ok = decision == "block"
+    elif expected_decision == "allow":
+        # Claude Code 2.1.x renamed the benign decision from "allow" → "approve".
+        # The hook auto-detects the running version; treat both as equivalent.
+        ok = decision in ("allow", "approve")
     else:
         ok = decision == expected_decision
 

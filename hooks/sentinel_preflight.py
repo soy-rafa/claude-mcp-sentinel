@@ -14,7 +14,8 @@ Protocol: Claude Code passes the tool call payload on stdin and expects a JSON
 response on stdout. Exit 0 always; the "decision" field controls behavior.
 
 Decision values:
-  "allow"  — tool call proceeds normally. No message added to context.
+  "approve" / "allow"  — tool call proceeds normally. No message added to context.
+                         Claude Code >= 2.1.x uses "approve"; older versions use "allow".
   "deny"   — tool call blocked. "reason" is shown to the user and Claude.
   "warn"   — tool call proceeds but with a warning message in context.
 
@@ -31,8 +32,98 @@ Usage (registered via install_hooks.sh, or manually):
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
+import time
 from pathlib import Path
+
+
+# Claude Code changed the root-level "decision" enum from "allow" → "approve"
+_APPROVE_MIN_VERSION = (2, 1, 0)
+_VERSION_CACHE_TTL = 86400  # 1 day
+
+
+def _version_cache_path():
+    base = os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache")
+    return Path(base) / "mcp-sentinel" / "claude_version"
+
+
+def _read_cached_version():
+    path = _version_cache_path()
+    try:
+        if time.time() - path.stat().st_mtime > _VERSION_CACHE_TTL:
+            return None
+        return path.read_text().strip() or None
+    except OSError:
+        return None
+
+
+def _write_cached_version(version_str):
+    path = _version_cache_path()
+    tmp = None
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        # Atomic: write to a tmp file and rename, to avoid corruption
+        # if multiple hooks run in parallel.
+        fd, tmp = tempfile.mkstemp(dir=path.parent)
+        with os.fdopen(fd, "w") as f:
+            f.write(version_str)
+        os.replace(tmp, path)
+        tmp = None  # ownership transferred to `path`
+    except OSError:
+        pass  # cache is best-effort
+    finally:
+        if tmp is not None:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+
+
+def _claude_version():
+    """Return Claude Code version as (major, minor, patch) or None.
+
+    Resolution order:
+      1. CLAUDE_CODE_VERSION env var (always re-read, so tests/CI can toggle it
+         within a single process).
+      2. Disk cache at ${XDG_CACHE_HOME:-~/.cache}/mcp-sentinel/claude_version.
+      3. `claude --version` subprocess; result is written to the disk cache.
+
+    No in-process memoization: per-call cost is one env-var read plus, at most,
+    one small `stat()` on the cache file — both negligible. Avoiding lru_cache
+    keeps the env-var override observable across calls in the same process.
+    """
+    version_str = os.environ.get("CLAUDE_CODE_VERSION", "")
+    if not version_str:
+        version_str = _read_cached_version() or ""
+    if not version_str:
+        # Resolve the binary explicitly so Windows .cmd/.bat wrappers are found
+        # without needing shell=True.
+        claude_bin = shutil.which("claude")
+        if claude_bin:
+            try:
+                result = subprocess.run(
+                    [claude_bin, "--version"],
+                    capture_output=True, text=True, timeout=2,
+                )
+                if result.returncode == 0:
+                    version_str = result.stdout.strip()
+                    if version_str:
+                        _write_cached_version(version_str)
+            except (subprocess.TimeoutExpired, OSError):
+                return None
+    m = re.search(r"(\d+)\.(\d+)\.(\d+)", version_str)
+    return tuple(int(x) for x in m.groups()) if m else None
+
+
+def _allow_value():
+    """Return the correct root-level 'allow' decision string for this Claude version."""
+    version = _claude_version()
+    if version is None or version >= _APPROVE_MIN_VERSION:
+        return "approve"
+    return "allow"
 
 
 def load_iocs():
@@ -272,13 +363,13 @@ def main():
     except json.JSONDecodeError:
         # If stdin is not JSON, err on the side of allowing — we don't want to
         # break Claude Code because of our hook.
-        print(json.dumps({"decision": "allow"}))
+        print(json.dumps({"decision": _allow_value()}))
         return
 
     decision, reason = decide(payload)
 
     if decision == "allow":
-        print(json.dumps({"decision": "allow"}))
+        print(json.dumps({"decision": _allow_value()}))
         return
 
     tool_name = payload.get("tool_name") or payload.get("tool", "<unknown>")
@@ -304,7 +395,7 @@ def main():
             f"Reason: {reason}"
         )
         print(json.dumps({
-            "decision": "allow",
+            "decision": _allow_value(),
             "reason": message,
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
