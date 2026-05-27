@@ -142,7 +142,7 @@ cat ~/.claude/settings.json | jq '.hooks.PreToolUse'
 
 # 2. Run the regression suite
 cd ~/.claude/skills/mcp-sentinel  # or wherever you installed it
-python3 -m pytest tests/test_hook.py -v
+python3 tests/test_hook.py
 ```
 
 You should see **20 passed**. If anything fails, the install didn't go through cleanly — open an issue with the test output.
