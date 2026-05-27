@@ -37,7 +37,6 @@ import subprocess
 import sys
 import tempfile
 import time
-from functools import lru_cache
 from pathlib import Path
 
 
@@ -63,6 +62,7 @@ def _read_cached_version():
 
 def _write_cached_version(version_str):
     path = _version_cache_path()
+    tmp = None
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         # Atomic: write to a tmp file and rename, to avoid corruption
@@ -71,18 +71,29 @@ def _write_cached_version(version_str):
         with os.fdopen(fd, "w") as f:
             f.write(version_str)
         os.replace(tmp, path)
+        tmp = None  # ownership transferred to `path`
     except OSError:
         pass  # cache is best-effort
+    finally:
+        if tmp is not None:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
 
 
-@lru_cache(maxsize=1)
 def _claude_version():
     """Return Claude Code version as (major, minor, patch) or None.
 
     Resolution order:
-      1. CLAUDE_CODE_VERSION env var (skips cache, for tests/CI).
+      1. CLAUDE_CODE_VERSION env var (always re-read, so tests/CI can toggle it
+         within a single process).
       2. Disk cache at ${XDG_CACHE_HOME:-~/.cache}/mcp-sentinel/claude_version.
-      3. `claude --version` subprocess; result is written to the cache.
+      3. `claude --version` subprocess; result is written to the disk cache.
+
+    No in-process memoization: per-call cost is one env-var read plus, at most,
+    one small `stat()` on the cache file — both negligible. Avoiding lru_cache
+    keeps the env-var override observable across calls in the same process.
     """
     version_str = os.environ.get("CLAUDE_CODE_VERSION", "")
     if not version_str:
