@@ -36,6 +36,7 @@ import json
 import os
 import re
 import sys
+import time
 from pathlib import Path
 
 # Bundled threat data (the malware-domain feed, and optionally the IOC library)
@@ -693,6 +694,45 @@ def render(key, lang, **kw):
     return variants.get(lang, variants["en"]).format(**kw)
 
 
+def _state_path(session_id):
+    """Per-session state file. SENTINEL_STATE_DIR overrides the location (tests)."""
+    sid = re.sub(r"[^A-Za-z0-9_-]", "", str(session_id or "default"))[:64] or "default"
+    base = os.environ.get("SENTINEL_STATE_DIR")
+    base = Path(base) if base else (Path.home() / ".claude" / "sentinel-state")
+    return base / f"{sid}.json"
+
+
+def record_event(payload, decision, category, ai_tokens=0):
+    """Tally a flagged decision into the per-session state file that the statusbar
+    and stats command read. Only deny/ask/warn are recorded (allow is the silent
+    hot path, never touched). Fully fail-safe: any error is swallowed so the hook
+    is never broken by bookkeeping."""
+    try:
+        if decision == "allow":
+            return
+        sid = payload.get("session_id") or payload.get("sessionId") or "default"
+        p = _state_path(sid)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            st = json.loads(p.read_text())
+        except Exception:
+            st = {}
+        for k in ("deny", "ask", "warn", "escalated", "ai_tokens"):
+            st.setdefault(k, 0)
+        if decision in ("deny", "ask", "warn"):
+            st[decision] += 1
+        if ai_tokens:
+            st["escalated"] += 1
+            st["ai_tokens"] += int(ai_tokens)
+        st["last"] = {"decision": decision, "category": category, "ts": int(time.time())}
+        st["updated"] = st["last"]["ts"]
+        tmp = p.with_suffix(".tmp")
+        tmp.write_text(json.dumps(st))
+        os.replace(tmp, p)
+    except Exception:
+        pass
+
+
 def _read_stdin_payload():
     """Read and parse the tool-call payload from stdin, tolerant of a BOM.
 
@@ -730,6 +770,9 @@ def main():
         # Silent allow: no stdout means the call proceeds normally without
         # adding any message to the conversation context.
         return
+
+    # Only flagged calls (deny/ask/warn) reach here — record for the statusbar.
+    record_event(payload, decision, category)
 
     tool_name = payload.get("tool_name") or payload.get("tool", "<unknown>")
     lang = detect_language(payload)

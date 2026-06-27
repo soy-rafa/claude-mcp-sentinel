@@ -50,9 +50,10 @@ A spectacular but **functional, non-disruptive, intelligent** v3.0:
 
 P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
 
-1. [ ] **Session event log + counters.** Hooks append blocked/asked/escalated
-   events to `~/.claude/sentinel-events.jsonl` (per session_id) so the statusbar
-   and reports can show real numbers. (foundation for 2 & 3)
+1. [x] **Session event log + counters.** DONE. `record_event()` in preflight
+   writes per-session counters to `~/.claude/sentinel-state/<sid>.json` (deny/
+   ask/warn/escalated/ai_tokens + last). Only flagged calls recorded; allow hot
+   path untouched. `SENTINEL_STATE_DIR` override for tests. Foundation for 2 & 3.
 2. [ ] **Statusbar integration.** A Sentinel segment in `custom_bar.sh`: shield +
    protection status, threats blocked/asked this session, feed freshness,
    integrity (baseline OK/drift), and AI tokens spent. Reads a tiny state file
@@ -82,3 +83,6 @@ P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
 - 00:10 — repo git-init'd (`c65be75` baseline v2.7.0); tar backup at
   `~/mcp-sentinel-backup-*.tar.gz`; research workflow wz072zaap launched; this
   plan written. Engaging the loop.
+- 00:20 — Feature #1 (session event log + counters) implemented + tested
+  (51/51, FP=0, recall=40/40). Committed. Next: statusbar integration (#2),
+  pending research backlog merge from wz072zaap.

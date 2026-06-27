@@ -434,6 +434,20 @@ def main():
     results.append(check("config-scan: integrity drift detects a new hook",
                          any("NEW hook" in d for d in cs.diff_baseline(s2, s1))))
 
+    # ---- SESSION STATE (statusbar counters) ---------------------------------
+    state_dir = Path(tmpdir) / "state"
+    os.environ["SENTINEL_STATE_DIR"] = str(state_dir)
+    try:
+        pf.record_event({"session_id": "testsess", "tool_name": "Read"}, "ask", "sensitive_path")
+        pf.record_event({"session_id": "testsess"}, "deny", "known_malicious")
+        pf.record_event({"session_id": "testsess"}, "allow", None)  # must NOT count
+        st_ev = json.loads((state_dir / "testsess.json").read_text())
+    finally:
+        os.environ.pop("SENTINEL_STATE_DIR", None)
+    results.append(check("session-state: ask+deny counted, allow ignored",
+                         st_ev.get("ask") == 1 and st_ev.get("deny") == 1
+                         and st_ev.get("warn", 0) == 0))
+
     # ---- SUMMARY -------------------------------------------------------------
 
     total = len(results)
