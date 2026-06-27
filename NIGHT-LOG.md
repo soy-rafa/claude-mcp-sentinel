@@ -44,6 +44,12 @@ A spectacular but **functional, non-disruptive, intelligent** v3.0:
    Sentinel hook first, reinstall after (or rely on field-scoping for content).
 7. **Nothing destructive / no external side effects** without it being inert by
    default. No network actions on the user's behalf.
+7b. **PRIVATE / LOCAL ONLY (hard rule).** Commit to the local `main` only. NEVER
+   `git push`, NEVER add a remote, NEVER create/publish a branch, NEVER open a
+   PR. The repo has no remote and must keep none. Any GitHub publishing is a
+   separate, explicit, owner-approved step done LATER — and PRIVATE first (a
+   private repo), never public, never a public branch. Read-only network
+   (research) is fine; pushing code is forbidden.
 8. Update this log every iteration (move items pending→done, note commits).
 9. **Rate-limit backoff (retry ~hourly until tokens resume).** Each iteration,
    read `~/.claude/usage-cache.json` (`rate_limits.five_hour|seven_day` →
