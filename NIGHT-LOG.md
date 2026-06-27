@@ -45,6 +45,18 @@ A spectacular but **functional, non-disruptive, intelligent** v3.0:
 7. **Nothing destructive / no external side effects** without it being inert by
    default. No network actions on the user's behalf.
 8. Update this log every iteration (move items pending→done, note commits).
+9. **Rate-limit backoff (retry ~hourly until tokens resume).** Each iteration,
+   read `~/.claude/usage-cache.json` (`rate_limits.five_hour|seven_day` →
+   `used_percentage`, `resets_at` epoch). If `five_hour.used_percentage >= 95`
+   OR `seven_day.used_percentage >= 98` (rate-limited / about to cut), do NOT use
+   the 270s cadence: set the next `ScheduleWakeup` `delaySeconds` to
+   `clamp(resets_at - now, 60, 3600)` — i.e. wait until the limit resets, capped
+   at 1h (runtime max), so it effectively retries hourly until tokens are back.
+   Log "rate-limited, backing off to <when>". Resume the 270s cadence once usage
+   drops below the thresholds. (Rafa's `claude-auto-resume` daemon already
+   resumes the SESSION on a hard cut; this rail just stops the LOOP from
+   hammering during the wait.) If `usage-cache.json` is missing/unreadable,
+   fail-safe to a 1800s delay rather than 270s.
 
 ## Build backlog (starter — research workflow will extend/reorder)
 
