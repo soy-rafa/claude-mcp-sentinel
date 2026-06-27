@@ -1,0 +1,28 @@
+{
+  "schema_version": "2.0",
+  "last_scan": null,
+  "scan_count": 0,
+  "inventory": [
+    {
+      "_comment": "Template — remove this entry. Each installed skill/MCP gets one of these.",
+      "name": "example-skill",
+      "type": "skill|mcp_server",
+      "source": "github.com/user/example-skill",
+      "version": "1.0.0",
+      "first_seen": "2026-04-12",
+      "status": "clean|warning|critical",
+      "findings": [],
+      "snapshots": {
+        "SKILL.md": {
+          "hash": "sha256:...",
+          "last_content": "full text stored here for diffing",
+          "last_scanned": "2026-04-12T09:00:00Z"
+        }
+      },
+      "change_history": []
+    }
+  ],
+  "known_threats": [],
+  "community_alerts": [],
+  "scan_history": []
+}

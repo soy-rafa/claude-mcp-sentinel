@@ -1,0 +1,161 @@
+{
+  "schema_version": "1.1",
+  "description": "MCP Sentinel Indicators of Compromise (IOCs) for Claude Code. Patterns, paths, and domains associated with skill/MCP attacks and agent credential theft. Maintained locally so runtime protection works offline. Contributions welcome via PR.",
+  "last_updated": "2026-06-27",
+
+  "sensitive_paths": {
+    "description": "File paths an agent should almost never read unless that is its explicit purpose. Access is a strong credential-harvesting signal.",
+    "patterns": [
+      "~/.ssh/",
+      "~/.ssh/id_rsa",
+      "~/.ssh/id_ed25519",
+      "~/.ssh/id_ecdsa",
+      "~/.ssh/config",
+      "~/.aws/credentials",
+      "~/.aws/config",
+      "~/.config/gcloud/",
+      "~/.azure/",
+      "~/.gnupg/",
+      "~/.config/gh/hosts.yml",
+      "~/.netrc",
+      "~/.pgpass",
+      "~/.docker/config.json",
+      "~/.kube/config",
+      "~/.npmrc",
+      "/etc/shadow",
+      "/etc/passwd"
+    ],
+    "regex_patterns": [
+      "(?:^|[\\s=:'\"(/])\\.env(?:\\.local)?(?:$|[\\s'\":)/\\\\])",
+      "(?i)\\b\\w*(_rsa|_ed25519|_ecdsa|_dsa)\\b",
+      "(?i)\\.(pem|ppk)\\b",
+      "(?i)credentials?\\.(json|db)",
+      "(?i)secrets?\\.(json|ya?ml|env)",
+      "(?i)api[_-]?keys?\\.(json|txt|env)"
+    ]
+  },
+
+  "sensitive_env_vars": {
+    "description": "Environment variables commonly containing secrets. Flagged ONLY when a command dereferences one (or dumps env) AND pipes/sends it to a network egress tool — mention alone is not flagged.",
+    "patterns": [
+      "AWS_SECRET_ACCESS_KEY",
+      "AWS_SESSION_TOKEN",
+      "ANTHROPIC_API_KEY",
+      "OPENAI_API_KEY",
+      "GITHUB_TOKEN",
+      "GH_TOKEN",
+      "STRIPE_SECRET_KEY",
+      "DATABASE_URL",
+      "SUPABASE_SERVICE_ROLE_KEY"
+    ]
+  },
+
+  "cloud_metadata": {
+    "description": "Cloud instance metadata service (IMDS) endpoints. An agent reaching these is a strong SSRF / cloud-credential-theft signal.",
+    "hosts": [
+      "169.254.169.254",
+      "metadata.google.internal",
+      "100.100.100.200",
+      "fd00:ec2::254"
+    ]
+  },
+
+  "config_write_paths": {
+    "description": "Files that, when WRITTEN/EDITED, grant persistence or hijack the agent. Writing here is flagged even though the content itself is not scanned.",
+    "patterns": [
+      ".claude/settings.json",
+      ".claude/settings.local.json",
+      ".claude.json",
+      ".mcp.json",
+      "/.bashrc",
+      "/.zshrc",
+      "/.zshenv",
+      "/.profile",
+      "/.bash_profile",
+      "/.zprofile",
+      "/.ssh/authorized_keys",
+      "/.config/autostart/",
+      "/library/launchagents/",
+      "/etc/cron"
+    ]
+  },
+
+  "suspicious_network": {
+    "description": "Network destinations associated with exfiltration. Matched by host boundary (eTLD+1 / suffix), not raw substring.",
+    "known_malicious_domains": [
+      {
+        "domain": "giftshop.club",
+        "incident": "Postmark MCP backdoor (v1.0.16, Sept 2025)",
+        "reference": "https://thehackernews.com/2025/09/first-malicious-mcp-server-found.html"
+      }
+    ],
+    "suspicious_tlds": [
+      ".tk", ".ml", ".ga", ".cf", ".gq"
+    ],
+    "pastebin_style": [
+      "pastebin.com", "paste.ee", "hastebin.com", "dpaste.com", "termbin.com",
+      "transfer.sh", "0x0.st", "file.io", "bashupload.com",
+      "webhook.site", "requestbin.net", "requestbin.com", "pipedream.net",
+      "ngrok.io", "ngrok-free.app", "serveo.net", "glitch.me"
+    ],
+    "raw_ip_url_regex": "https?://\\[?\\d{1,3}(?:\\.\\d{1,3}){3}"
+  },
+
+  "dangerous_commands": {
+    "description": "Shell command patterns indicating exfiltration, RCE, reverse shells, or persistence. Scanned only on command fields (not on file content being written).",
+    "patterns": [
+      "(?i)curl\\s+.*\\|\\s*(sudo\\s+)?(bash|sh|zsh|python)",
+      "(?i)wget\\s+.*\\|\\s*(sudo\\s+)?(bash|sh|zsh|python)",
+      "(?i)base64\\s.*(curl|wget|nc|ncat)",
+      "(?i)(^|;|\\|)\\s*eval\\s+[\"'$`]",
+      "(?i)nc\\s+-e",
+      "(?i)\\bnc\\s+(-\\w+\\s+)*\\d{1,3}(\\.\\d{1,3}){3}\\s+\\d+",
+      "(?i)bash\\s+-i\\s+>&\\s*/dev/tcp/",
+      "(?i)/dev/tcp/\\d",
+      "(?i)python[0-9]?\\s+-c.*socket.*(connect|sock_stream)",
+      "(?i)pty\\.spawn\\(",
+      "(?i)(^|;|\\|)\\s*dd\\s+if=.*of=/dev/",
+      "chmod\\s+[0-7]*777",
+      ">>\\s*~?/?\\.(bashrc|zshrc|profile|bash_profile|zprofile)",
+      "(?i)crontab\\s+-",
+      "(?i)\\bsed\\b[^;\\n]*s/(?:\\\\.|[^/])*/(?:\\\\.|[^/])*/[a-z]*e",
+      "(?i)\\bsed\\b[^;\\n]*s@(?:\\\\.|[^@])*@(?:\\\\.|[^@])*@[a-z]*e",
+      "(?i)\\bsed\\b[^;\\n]*s#(?:\\\\.|[^#])*#(?:\\\\.|[^#])*#[a-z]*e",
+      "(?i)\\bsort\\b[^;\\n]*--compress-program",
+      "(?i)\\bman\\b[^;\\n]*--html=",
+      "(?i)\\bgit\\b[^;\\n]*--(upload|receive)-pa\\w*=",
+      "(?i)\\brg\\b[^;\\n]*--pre(-glob)?[ =]",
+      "\\$\\{[^}]*@P\\}"
+    ]
+  },
+
+  "prompt_injection_phrases": {
+    "description": "Phrases common in prompt-injection embedded inside SKILL.md / repo files / tool results. Used by the static analysis layer.",
+    "patterns": [
+      "(?i)ignore\\s+(all\\s+)?previous\\s+instructions",
+      "(?i)disregard\\s+(all\\s+)?(the\\s+)?(above|previous)",
+      "(?i)act\\s+as\\s+(root|admin|superuser)",
+      "(?i)you\\s+are\\s+now\\s+in\\s+developer\\s+mode",
+      "(?i)do\\s+not\\s+(tell|show|mention)\\s+the\\s+user",
+      "(?i)hide\\s+this\\s+from\\s+the\\s+user",
+      "(?i)bypass\\s+(safety|security|guidelines)"
+    ]
+  },
+
+  "allowlist": {
+    "description": "Paths and domains explicitly allowed to reduce false positives. Users extend this in their .security/sentinel-allowlist.json or ~/.claude/sentinel-allowlist.json.",
+    "paths": [
+      "/tmp/",
+      "/var/tmp/"
+    ],
+    "domains": [
+      "api.anthropic.com",
+      "api.github.com",
+      "github.com",
+      "raw.githubusercontent.com",
+      "registry.npmjs.org",
+      "pypi.org",
+      "files.pythonhosted.org"
+    ]
+  }
+}
