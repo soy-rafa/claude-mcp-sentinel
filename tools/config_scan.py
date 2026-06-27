@@ -60,7 +60,21 @@ def _read_json(path):
 
 
 def _sha(s):
-    return hashlib.sha256(s.encode("utf-8", "replace")).hexdigest()[:16]
+    # Full SHA-256. Earlier builds truncated to [:16] (64 bits); a tampered hook
+    # could in principle be crafted to collide. Full digest, no shortcut.
+    return hashlib.sha256(s.encode("utf-8", "replace")).hexdigest()
+
+
+def _baseline_is_stale(baseline):
+    """Old baselines used 16-char truncated hashes. Detect them so we re-baseline
+    rather than silently mis-comparing 16-char vs 64-char hashes (false drift)."""
+    if not isinstance(baseline, dict):
+        return False
+    for section in ("hooks", "mcp", "docs"):
+        for v in (baseline.get(section) or {}).values():
+            if isinstance(v, str) and len(v) and len(v) != 64:
+                return True
+    return False
 
 
 def settings_files():
@@ -200,6 +214,9 @@ def diff_baseline(state, baseline):
     drift = []
     if not baseline:
         return drift
+    if _baseline_is_stale(baseline):
+        return ["BASELINE STALE: hash format upgraded to full SHA-256. "
+                "Re-run `config_scan.py --baseline` to re-establish trust."]
     for section, label in (("hooks", "hook"), ("mcp", "MCP server"), ("docs", "config file")):
         cur, old = state.get(section, {}), baseline.get(section, {})
         for k, v in cur.items():

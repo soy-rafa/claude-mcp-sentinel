@@ -84,5 +84,11 @@ P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
   `~/mcp-sentinel-backup-*.tar.gz`; research workflow wz072zaap launched; this
   plan written. Engaging the loop.
 - 00:20 — Feature #1 (session event log + counters) implemented + tested
-  (51/51, FP=0, recall=40/40). Committed. Next: statusbar integration (#2),
-  pending research backlog merge from wz072zaap.
+  (51/51). Committed `cd1301a`.
+- 00:25 — Research wz072zaap landed: 48 ideas -> 16-item backlog, saved to
+  `docs/v3-backlog.md` (+ raw). Build order set. Note: backlog #3 (bypass sigs)
+  ALREADY done in v2.7.0; backlog #5 (telemetry) overlaps Feature #1.
+- 00:30 — Backlog #1 (integrity hash -> full SHA-256 + stale-baseline migration)
+  done + tested (53/53, FP=0, recall=40/40). Real baseline re-established with
+  full hashes; live scan clean. Committed. Next: backlog #2 (FP regression for
+  IOC-in-content), then #4 (injection/obfuscation corpus), #5/#6 (telemetry+bar).
