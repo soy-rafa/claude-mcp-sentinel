@@ -777,6 +777,20 @@ def main():
 
     decision, reason, category, entity = decide(payload)
 
+    # Optional AI escalation for AMBIGUOUS (ask) calls only. Opt-in
+    # (SENTINEL_AI=on), off by default, never on the allow hot path. Sharpens a
+    # vague "ask" into allow/ask/deny. Fail-open: any issue keeps the local "ask".
+    if decision == "ask":
+        try:
+            import sentinel_ai
+            if sentinel_ai.enabled():
+                v = sentinel_ai.escalate(payload, reason or "", category or "")
+                if v and v.get("decision") in ("allow", "ask", "deny"):
+                    decision = v["decision"]
+                    reason = f"{reason} | AI({v.get('model', '?')}): {v.get('reason', '')}"
+        except Exception:
+            pass
+
     if decision == "allow":
         # Silent allow: no stdout means the call proceeds normally without
         # adding any message to the conversation context.

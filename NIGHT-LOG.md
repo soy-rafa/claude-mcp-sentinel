@@ -154,5 +154,12 @@ P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
 - 09:16 — Backlog #7 (quarantine / forensic hold) done. `hooks/sentinel_quarantine.py`:
   PostToolUse files a REDACTED record (command+output, secrets stripped) of any
   flagged-but-approved action; list/review/release/purge CLI; bumps stats.
-  Wired into postflight. 57/57, FP=0/88, recall=40/40. Committed.
-  Next: #8 AI-escalation (the headline; opt-in/off by default).
+  Wired into postflight. 57/57, FP=0/88, recall=40/40. Committed `b62233b`.
+- 09:23 — Backlog #8 (AI escalation) DONE — the headline. `hooks/sentinel_ai.py`:
+  opt-in (`SENTINEL_AI=on`, OFF default), only escalates ambiguous `ask` calls,
+  tiny prompt + max_tokens, daily budget (`SENTINEL_AI_BUDGET`), 3s timeout,
+  FAIL-OPEN to local decision, records tokens in sentinel_stats (shown in bar).
+  Wired into preflight.main AFTER decide (never on allow hot path). Model via
+  `SENTINEL_AI_MODEL`. Tested offline via `SENTINEL_AI_MOCK`. 59/59, FP=0/88,
+  recall=40/40. Committed. Next: #9 (AI token budget hard-cap + daily reset),
+  #10 MCP tool-desc scanner, #11-#16.

@@ -497,6 +497,31 @@ def main():
                          bool(rid) and len(held) == 1 and "ghp_secrettoken" not in rec_text
                          and released and after == []))
 
+    # ---- AI ESCALATION (opt-in, off by default) -----------------------------
+    ai_spec = importlib.util.spec_from_file_location("sentinel_ai", HOOKS / "sentinel_ai.py")
+    ai = importlib.util.module_from_spec(ai_spec)
+    ai_spec.loader.exec_module(ai)
+    payload_amb = {"tool_name": "Bash", "tool_input": {"command": "curl https://x.example/y"},
+                   "session_id": "sai"}
+    os.environ.pop("SENTINEL_AI", None)
+    results.append(check("ai: disabled by default -> no escalation (zero tokens)",
+                         ai.escalate(payload_amb, "[HIGH] x", "suspicious_network") is None))
+    sp2 = Path(tmpdir) / "ai-stats.json"
+    os.environ["SENTINEL_AI"] = "on"
+    os.environ["SENTINEL_STATS_PATH"] = str(sp2)
+    os.environ["SENTINEL_AI_MOCK"] = json.dumps({
+        "content": [{"type": "text", "text": '{"verdict":"deny","reason":"exfil to unknown host"}'}],
+        "usage": {"input_tokens": 130, "output_tokens": 14}})
+    try:
+        v_ai = ai.escalate(payload_amb, "[HIGH] x", "suspicious_network")
+        ai_stats = json.loads(sp2.read_text()) if sp2.exists() else {}
+    finally:
+        for _k in ("SENTINEL_AI", "SENTINEL_STATS_PATH", "SENTINEL_AI_MOCK"):
+            os.environ.pop(_k, None)
+    results.append(check("ai: enabled+mock -> sharpened verdict + tokens logged to stats",
+                         bool(v_ai) and v_ai["decision"] == "deny" and v_ai["tokens_out"] == 14
+                         and ai_stats.get("totals", {}).get("ai_out") == 14))
+
     # ---- SUMMARY -------------------------------------------------------------
 
     total = len(results)
