@@ -186,4 +186,9 @@ P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
 - 09:53 — Backlog #12 (feed auto-sync hardening) done. Anti-poisoning guard
   (refuse a >50% shrink = truncated/poisoned fetch, keep old) + version/
   provenance meta (feed-meta.json) + fixed --plain wiring. 71/71, FP=0/88.
-  Committed. Next: #13 env-injection in MCP args, #14 cross-platform, #15-#16.
+  Committed `ce87a5a`.
+- 10:00 — Backlog #13 (env-injection in MCP args) done. scan_server_spec flags
+  command substitution `$(...)`/backticks and secret env-var derefs in MCP
+  config args (server as exfil channel, no network sink needed). 74/74, FP=0/88,
+  real scan clean. Committed. Next: #14 cross-platform parity, #15 attack-chain,
+  #16 data-flow cross-server, then SHIP.

@@ -37,6 +37,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -205,6 +206,12 @@ def scan_server_spec(name, spec):
     for s in _collect_strings(spec):
         for rx in scan_injection(s):
             findings.append(f"MCP '{name}': hidden-instruction/obfuscation in config /{rx}/")
+        # Command substitution or secret-env dereference embedded in a config arg
+        # — the MCP server captures secrets/output and becomes the exfil channel.
+        if re.search(r"\$\([^)]+\)", s) or re.search(r"`[^`]+`", s):
+            findings.append(f"MCP '{name}': command substitution in config arg ({s[:60]})")
+        if pf is not None and getattr(pf, "_SECRET_DEREF_RE", None) and pf._SECRET_DEREF_RE.search(s):
+            findings.append(f"MCP '{name}': secret env var dereferenced in config arg (forwarded to server?)")
     # Endpoint redirection: run the server url through the network detection.
     url = spec.get("url") if isinstance(spec, dict) else None
     if isinstance(url, str) and url and pf is not None:

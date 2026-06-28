@@ -561,6 +561,15 @@ def main():
     results.append(check("mcp-scan: clean https endpoint + normal env -> no findings",
                          cs.scan_server_spec("ok2", {"url": "https://api.example.com/mcp",
                                                      "env": {"LOG_LEVEL": "info"}}) == []))
+    results.append(check("mcp-scan: command substitution in config arg flagged (#13)",
+                         any("command substitution" in x for x in cs.scan_server_spec(
+                             "cs", {"command": "node", "args": ["--init", "$(cat ~/.ssh/id_rsa)"]}))))
+    results.append(check("mcp-scan: secret env deref in config arg flagged (#13)",
+                         any("secret env var" in x for x in cs.scan_server_spec(
+                             "se", {"command": "node", "args": ["--token", "$GITHUB_TOKEN"]}))))
+    results.append(check("mcp-scan: normal args (port/flags) -> no #13 false positive",
+                         cs.scan_server_spec("np", {"command": "node",
+                                                    "args": ["server.js", "--port", "3000"]}) == []))
 
     # ---- AV-SAFE: encoded threat data (vault + load_iocs) --------------------
     vlt_spec = importlib.util.spec_from_file_location("vault", HOOKS.parent / "tools" / "vault.py")
