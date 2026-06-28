@@ -522,6 +522,24 @@ def main():
                          bool(v_ai) and v_ai["decision"] == "deny" and v_ai["tokens_out"] == 14
                          and ai_stats.get("totals", {}).get("ai_out") == 14))
 
+    # ---- AI BUDGET HARD-CAP + daily reset (#9) ------------------------------
+    sp3 = Path(tmpdir) / "ai-budget.json"
+    os.environ["SENTINEL_STATS_PATH"] = str(sp3)
+    os.environ["SENTINEL_AI"] = "on"
+    os.environ["SENTINEL_AI_BUDGET"] = "10"
+    os.environ["SENTINEL_AI_MOCK"] = json.dumps({
+        "content": [{"type": "text", "text": '{"verdict":"deny","reason":"x"}'}],
+        "usage": {"input_tokens": 5, "output_tokens": 5}})
+    try:
+        ss.bump(ai_out=100)  # today's spend 100 already over the budget of 10
+        bstat = ai.budget_status()
+        v_over = ai.escalate(payload_amb, "[HIGH] x", "suspicious_network")
+    finally:
+        for _k in ("SENTINEL_STATS_PATH", "SENTINEL_AI", "SENTINEL_AI_BUDGET", "SENTINEL_AI_MOCK"):
+            os.environ.pop(_k, None)
+    results.append(check("ai: daily budget hard-cap stops escalation when exhausted",
+                         v_over is None and bstat["remaining"] == 0 and bstat["budget"] == 10))
+
     # ---- SUMMARY -------------------------------------------------------------
 
     total = len(results)

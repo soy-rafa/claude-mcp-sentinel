@@ -161,5 +161,8 @@ P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
   FAIL-OPEN to local decision, records tokens in sentinel_stats (shown in bar).
   Wired into preflight.main AFTER decide (never on allow hot path). Model via
   `SENTINEL_AI_MODEL`. Tested offline via `SENTINEL_AI_MOCK`. 59/59, FP=0/88,
-  recall=40/40. Committed. Next: #9 (AI token budget hard-cap + daily reset),
-  #10 MCP tool-desc scanner, #11-#16.
+  recall=40/40. Committed `e547ca5`.
+- 09:30 — Backlog #9 (AI daily budget hard-cap + reset) done. `budget_status()`
+  in sentinel_ai; escalation skipped once today's spend >= SENTINEL_AI_BUDGET
+  (resets per UTC day via stats buckets). 60/60, FP=0/88. Committed.
+  Next: #10 MCP tool-description scanner (anti line-jumping), #11-#16.

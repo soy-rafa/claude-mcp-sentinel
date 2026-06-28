@@ -58,6 +58,14 @@ def _today_ai_tokens():
         return 0
 
 
+def budget_status():
+    """Today's AI-escalation budget: used / budget / remaining. Resets daily
+    because the spend is read from sentinel_stats' per-UTC-day bucket."""
+    used = _today_ai_tokens()
+    b = _budget()
+    return {"used": used, "budget": b, "remaining": max(0, b - used)}
+
+
 def build_prompt(payload, local_reason, category):
     tool = payload.get("tool_name") or payload.get("tool", "")
     ti = payload.get("tool_input") or payload.get("input") or {}
