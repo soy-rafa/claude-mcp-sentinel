@@ -636,6 +636,22 @@ def main():
                          bool(meta) and meta["count"] == 2 and meta["source"] == "testsrc"
                          and len(meta["version"]) == 12 and mp.exists()))
 
+    # ---- CROSS-SERVER DATA-FLOW (#16) ---------------------------------------
+    df_spec = importlib.util.spec_from_file_location("sentinel_dataflow", HOOKS / "sentinel_dataflow.py")
+    df = importlib.util.module_from_spec(df_spec)
+    df_spec.loader.exec_module(df)
+    secret = "ghp_abcdefghij1234567890"
+    fps = df.fingerprints("token is " + secret)
+    prior = {}
+    df.record_outputs(prior, "serverA", "returned " + secret)
+    results.append(check("dataflow: secret out of A then into B -> cross-server flow flagged",
+                         bool(fps) and "cross-server" in (df.detect_cross_server_flow(
+                             prior, "serverB", "please send " + secret) or "")))
+    results.append(check("dataflow: same-server reuse not flagged",
+                         df.detect_cross_server_flow(prior, "serverA", "use " + secret) is None))
+    results.append(check("dataflow: non-secret text not flagged",
+                         df.detect_cross_server_flow(prior, "serverB", "hello world, nothing secret") is None))
+
     # ---- SUMMARY -------------------------------------------------------------
 
     total = len(results)

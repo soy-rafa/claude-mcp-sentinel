@@ -3,6 +3,58 @@
 All notable changes to MCP Sentinel are recorded here. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/). Versioning is [semver](https://semver.org/).
 
+## [3.0.0] - 2026-06-28
+
+Major release. An autonomous build pass turned Sentinel from a runtime hook into
+a full agent-security suite: a fast local hot path, an optional AI brain for the
+ambiguous cases, off-hot-path scanners, telemetry + a statusbar, and antivirus-
+safe distribution. Driven by multi-agent threat research (`docs/V3-PROPOSAL.md`,
+`docs/v3-backlog.md`). Built feature-by-feature, each a tested commit; the suite
+stayed green throughout (81/81, precision FP=0/91, recall 44/44).
+
+### Added — intelligence
+- **AI escalation layer (`hooks/sentinel_ai.py`)** — opt-in (`SENTINEL_AI=on`,
+  off by default), **never on the allow hot path**. Only the rare ambiguous
+  `ask` escalates to the selected model with a tiny prompt; daily token budget
+  (`SENTINEL_AI_BUDGET`) with a hard cap, 3s timeout, **fail-open to the local
+  decision**, and every token reported in telemetry + the statusbar.
+
+### Added — visibility
+- **Telemetry (`hooks/sentinel_stats.py`)** — atomic, fail-open daily/session/
+  totals (decisions, AI tokens, quarantine, chains).
+- **Statusbar segment** in `~/.claude/custom_bar.sh` — `🛡 SNTL ⚑N AI:Nk`
+  (threats flagged today + AI token spend), Bash+jq, clean fallback.
+- **Quarantine / forensic hold (`hooks/sentinel_quarantine.py`)** — redacted
+  post-facto record of approved-but-flagged actions; `list/review/release/purge`.
+
+### Added — detection (off the hot path)
+- **Config/MCP static scanner** grew anti-line-jumping (hidden instructions /
+  Unicode-ANSI-HTML obfuscation in tool descriptions), endpoint/proxy-redirection
+  and risky-env (`NODE_OPTIONS`/`LD_PRELOAD`/proxy) checks, and env-injection /
+  command-substitution in MCP args.
+- **Attack-chain / trajectory detection** — credential-access→egress and
+  credential-harvesting across a session.
+- **Cross-server data-flow** — fingerprints secrets output by one MCP server and
+  flags them entering another (laundered exfiltration).
+- **Cross-platform parity** — PowerShell dangerous patterns (IEX DownloadString,
+  `iwr|iex`, `-EncodedCommand`, `Net.Sockets.TCPClient`).
+- **Allowlist-bypass signatures** (CVE-2025-66032) and an **expanded injection +
+  obfuscation corpus**.
+
+### Added — robustness & safety
+- **Integrity baseline** uses full SHA-256 with stale-baseline migration.
+- **Feed auto-sync hardening** — anti-poisoning guard (refuse a >50% shrink) +
+  version/provenance metadata.
+- **Antivirus-safe distribution** — `tools/vault.py` encodes threat data base64
+  at rest; `iocs.b64` (loaded by `load_iocs`), the URLhaus feed, and the attack
+  corpus ship with **no plaintext signatures**, so a defended machine's antivirus
+  does not raise false alarms. See `ANTIVIRUS.md`.
+
+### Notes
+- The PreToolUse hot path stays pure-local, fast, and fail-open. All new
+  subsystems are opt-in or off-hot-path. Cross-server data-flow ships as the
+  detector core (deep MCP-call wiring is a follow-up).
+
 ## [2.7.0] - 2026-06-27
 
 v3 P0 capabilities. Driven by a multi-agent threat-research pass over the Claude
