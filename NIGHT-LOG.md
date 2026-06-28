@@ -182,5 +182,8 @@ P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
 - 09:46 — Backlog #11 (MCP endpoint/proxy redirection scan) done. scan_server_spec
   now flags suspicious server `url` (via decide) and risky `env` overrides
   (HTTP_PROXY/NODE_OPTIONS/LD_PRELOAD/DYLD_INSERT_LIBRARIES...). 68/68, FP=0/88,
-  real scan clean. Committed. Next: #12 IOC auto-sync, #13 env-injection in MCP
-  args, #14-#16.
+  real scan clean. Committed `46ab127`.
+- 09:53 — Backlog #12 (feed auto-sync hardening) done. Anti-poisoning guard
+  (refuse a >50% shrink = truncated/poisoned fetch, keep old) + version/
+  provenance meta (feed-meta.json) + fixed --plain wiring. 71/71, FP=0/88.
+  Committed. Next: #13 env-injection in MCP args, #14 cross-platform, #15-#16.

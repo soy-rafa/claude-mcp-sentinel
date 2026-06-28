@@ -583,6 +583,24 @@ def main():
     results.append(check("av-safe: load_iocs decodes encoded iocs.b64 (ship without plaintext signatures)",
                          "sensitive_paths" in loaded_iocs and "dangerous_commands" in loaded_iocs))
 
+    # ---- FEED AUTO-SYNC: poisoning guard + versioning (#12) ------------------
+    ub_spec = importlib.util.spec_from_file_location(
+        "update_blocklist", HOOKS.parent / "tools" / "update_blocklist.py")
+    ub = importlib.util.module_from_spec(ub_spec)
+    ub_spec.loader.exec_module(ub)
+    results.append(check("feed-sync: poisoning guard refuses a drastic shrink",
+                         (not ub.passes_sanity(5, 100)) and ub.passes_sanity(90, 100)
+                         and ub.passes_sanity(5, 10)))
+    feed_file = Path(tmpdir) / "feed-count.b64"
+    ub.write_feed({"a.com", "b.com", "c.com"}, feed_file, encode=True)
+    results.append(check("feed-sync: _existing_count reads encoded feed",
+                         ub._existing_count(feed_file) == 3))
+    mp = Path(tmpdir) / "feed-meta.json"
+    meta = ub.write_meta(feed_file, {"a.com", "b.com"}, "testsrc", meta_path=mp)
+    results.append(check("feed-sync: write_meta records count+version+source",
+                         bool(meta) and meta["count"] == 2 and meta["source"] == "testsrc"
+                         and len(meta["version"]) == 12 and mp.exists()))
+
     # ---- SUMMARY -------------------------------------------------------------
 
     total = len(results)
