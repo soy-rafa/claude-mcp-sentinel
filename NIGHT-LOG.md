@@ -107,6 +107,10 @@ P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
   `docs/v3-backlog.md` (+ raw). Build order set. Note: backlog #3 (bypass sigs)
   ALREADY done in v2.7.0; backlog #5 (telemetry) overlaps Feature #1.
 - 00:30 — Backlog #1 (integrity hash -> full SHA-256 + stale-baseline migration)
-  done + tested (53/53, FP=0, recall=40/40). Real baseline re-established with
-  full hashes; live scan clean. Committed. Next: backlog #2 (FP regression for
-  IOC-in-content), then #4 (injection/obfuscation corpus), #5/#6 (telemetry+bar).
+  done + tested. Committed `633082f`. Real baseline re-established.
+- 00:38 — Ops rails added: rate-limit hourly backoff (`63bd296`), private/local
+  only never-push (`12d5c26`).
+- 00:45 — Backlog #2 (FP: IOC-in-action vs content) — field-scoping already did
+  it; locked with 3 regression cases (Write/Edit docs citing giftshop/curl|bash/
+  env-exfil in content -> allow). FP=0/88, recall=40/40, 53/53. Committed.
+  Next: backlog #4 (injection + Unicode/ANSI/HTML obfuscation corpus).
