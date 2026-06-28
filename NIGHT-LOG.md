@@ -140,7 +140,10 @@ P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
   done + tested. Committed `633082f`. Real baseline re-established.
 - 00:38 — Ops rails added: rate-limit hourly backoff (`63bd296`), private/local
   only never-push (`12d5c26`).
-- 00:45 — Backlog #2 (FP: IOC-in-action vs content) — field-scoping already did
-  it; locked with 3 regression cases (Write/Edit docs citing giftshop/curl|bash/
-  env-exfil in content -> allow). FP=0/88, recall=40/40, 53/53. Committed.
-  Next: backlog #4 (injection + Unicode/ANSI/HTML obfuscation corpus).
+- 00:45 — Backlog #2 (FP regression IOC-in-content) done. `c15dd88`.
+- ~08:30 — RELAUNCH (Rafa awake, chose option 2). Root-cause fix: Sentinel
+  Pre/Post hooks DISABLED for the whole build. Operative updated.
+- 08:40 — Backlog #4 (injection corpus + obfuscation: zero-width/RTL/Unicode-
+  tags/ANSI/HTML comments) done + tested (54/54, FP=0/88, recall=40/40), real
+  scan clean. Committed `0ffd77d`. Next: backlog #5 (telemetry stats module),
+  then #6 (statusbar), #7 (quarantine), #8 (AI-escalation).
