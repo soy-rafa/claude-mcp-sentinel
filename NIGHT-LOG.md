@@ -3,31 +3,31 @@
 > Rafa asked for an autonomous overnight build → v3.0 by morning. This file is
 > the plan, the safety rails, and the live progress log. Newest report at top.
 
-## ✅ MORNING REPORT — v3.0.0 COMPLETE (2026-06-28)
+## ✅ INFORME DE CIERRE — v3.0.0 COMPLETA (2026-06-28)
 
-- Status: **DONE. Full backlog (16/16) shipped, all green, hooks re-enabled.**
+- Estado: **HECHO. Backlog completo (16/16) entregado, todo verde, hooks reactivados.**
 - **Tests:** `tests/test_hook.py` → 81/81. `tests/precision_check.py` →
-  **FP=0/91, recall=44/44**. Threat data now loaded from encoded `iocs.b64`.
-- **Shipped in v3.0.0** (each a tested commit; see `git log --oneline`):
-  1. Session event counters (`record_event`). 2. Integrity hash → full SHA-256
-  + stale-baseline migration. 3. FP regression lock (IOC-in-content).
-  4. Injection + Unicode/ANSI/HTML-obfuscation corpus. 5. Telemetry module
-  (`sentinel_stats`). 6. Statusbar Sentinel segment (`🛡 SNTL ⚑N AI:Nk`).
-  7. Quarantine / forensic hold with secret redaction. 8. **AI escalation**
-  (opt-in, ambiguous-only, budget, fail-open, token-reported). 9. AI daily
-  budget hard-cap. 10. MCP server-spec scanner (anti line-jumping). 11. MCP
-  endpoint/proxy-redirection scan. 12. Feed auto-sync hardening (anti-poisoning
-  + versioning). 13. Env-injection in MCP args. 14. Cross-platform PowerShell
-  parity. 15. Attack-chain / trajectory detection. 16. Cross-server data-flow.
-  Plus: bypass signatures (CVE-2025-66032, from v2.7), and **AV-safe shipping**
-  (`vault.py`, encoded `iocs.b64` + feed + corpus — no plaintext signatures).
-- **Pending / not done:** deep live-wiring of #16 (cross-server data-flow) into
-  the MCP-call path is the detector core only (needs MCP tool_name plumbing);
-  ToxicSkills feed source (only URLhaus wired); test_hook.py inline literals stay
-  dev-only (exclude tests/ on install per ANTIVIRUS.md).
-- **Token cost:** the 5h rate window went ~9% → ~27% during the build (~18% of a
-  5-hour budget) plus the feature-research workflow; well under the 2.5M target.
-- **Reversible:** every step is a git commit; tar backup at `~/mcp-sentinel-backup-*`.
+  **FP=0/91, recall=44/44**. Los datos de amenaza se cargan ya desde `iocs.b64` codificado.
+- **Entregado en v3.0.0** (cada uno un commit testeado; ver `git log --oneline`):
+  1. Contadores de eventos por sesión (`record_event`). 2. Hash de integridad →
+  SHA-256 completo + migración de baseline stale. 3. Regresión FP (IOC en contenido).
+  4. Corpus de inyección + ofuscación Unicode/ANSI/HTML. 5. Módulo de telemetría
+  (`sentinel_stats`). 6. Segmento Sentinel en la barra (`🛡 SNTL ⚑N AI:Nk`).
+  7. Quarantine / forensic hold con redacción de secretos. 8. **Escalada IA**
+  (opt-in, solo casos ambiguos, presupuesto, fail-open, tokens reportados). 9. Corte
+  duro de presupuesto diario IA. 10. Escáner de specs MCP (anti line-jumping). 11. Escaneo
+  de redirección de endpoints/proxy MCP. 12. Auto-sync robusto del feed (anti-poisoning
+  + versionado). 13. Inyección de env-vars en args MCP. 14. Paridad cross-platform
+  (PowerShell). 15. Detección de cadenas de ataque / trajectory. 16. Data-flow cross-server.
+  Además: firmas de bypass (CVE-2025-66032, desde v2.7) y **distribución AV-safe**
+  (`vault.py`, `iocs.b64` + feed + corpus codificados — sin firmas en claro).
+- **Pendiente / no hecho:** el wiring profundo de #16 (data-flow cross-server) en el
+  path real de llamadas MCP es solo el core detector (necesita la fontanería del
+  tool_name MCP); fuente ToxicSkills del feed (solo URLhaus cableado); los literales
+  de `test_hook.py` quedan solo-dev (excluir `tests/` al instalar, ver `ANTIVIRUS.md`).
+- **Coste en tokens:** la ventana de 5h pasó de ~9% a ~27% durante el build (~18% de un
+  presupuesto de 5 horas) más el workflow de investigación; muy por debajo del tope de 2.5M.
+- **Reversible:** cada paso es un commit de git; backup tar en `~/mcp-sentinel-backup-*`.
 
 ## RELAUNCH — 2026-06-28 (root cause fixed)
 
