@@ -53,12 +53,21 @@ fix is a tested commit + an audience-facing CHANGELOG note.
   it for the build (regenerate at ship). Regressions locked in test_hook (85/85).
   **Red-team now 34/34 caught, 0 FP.** Suite 85/85, precision FP=0/91, recall 44/44.
 
-- iter 2 — **DONE (A) SHADOW / audit-only mode**. `_shadow_enabled()` +
-  `SENTINEL_SHADOW=on`: main() downgrades any deny/ask to a non-blocking
-  allow-with-note and tallies `would_block` in session-state + sentinel_stats
-  (shown in the stats report). 2 regression tests (ask AND deny downgraded;
-  would_block==2). Suite 87/87, precision FP=0/91 recall 44/44, redteam 0/0.
-  Answers Rafa's folder-exclusion question. Commit pending below.
+- iter 2 — **DONE (A) SHADOW / audit-only mode** (commit be21bd6).
+  `_shadow_enabled()` + `SENTINEL_SHADOW=on`: main() downgrades any deny/ask to a
+  non-blocking allow-with-note and tallies `would_block` in session-state +
+  sentinel_stats (shown in the stats report). 2 regression tests. Answers Rafa's
+  folder-exclusion question. 87/87, FP=0/91, recall 44/44, redteam 0/0.
+- iter 3 — **DONE (B) AI-layer prompt-injection hardening**. sentinel_ai
+  build_prompt now fences untrusted tool fields with anti-injection framing +
+  defangs an embedded fence (`_sanitize_field`); and a deterministic, un-promptable
+  backstop in escalate() forbids the AI from UPGRADING an injected payload to
+  "allow" (caps at "ask"; may still sharpen to "deny"). 3 regression tests (prompt
+  framing+fence count; injected payload capped to ask; clean allow untouched). The
+  jailbreak-the-judge case is tested offline here (deterministic) rather than in the
+  redteam harness, which keeps the AI layer off by design. CHANGELOG carries the
+  audience analysis (is the AI injectable / worth it). 90/90, FP=0/91, recall 44/44,
+  redteam 0/0. Commit pending below.
 
 ## Rafa's additions (fold into the red-team, build next)
 
