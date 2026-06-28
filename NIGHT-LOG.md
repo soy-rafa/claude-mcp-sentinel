@@ -151,4 +151,8 @@ P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
   (live, OUTSIDE repo, backed up): shows `🛡 SNTL:ON/OFF ⚑N AI:Nk` from
   stats.json, Bash+jq only, clean fallback when no stats. Versioned copy at
   docs/statusbar-snippet.sh. Render verified both paths; suite 55/55, FP=0/88.
-  Next: #7 quarantine, #8 AI-escalation.
+- 09:16 — Backlog #7 (quarantine / forensic hold) done. `hooks/sentinel_quarantine.py`:
+  PostToolUse files a REDACTED record (command+output, secrets stripped) of any
+  flagged-but-approved action; list/review/release/purge CLI; bumps stats.
+  Wired into postflight. 57/57, FP=0/88, recall=40/40. Committed.
+  Next: #8 AI-escalation (the headline; opt-in/off by default).

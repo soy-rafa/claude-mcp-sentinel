@@ -119,6 +119,18 @@ def main():
 
     decision, reason, category, entity = decide(payload)
 
+    # A flagged (ask) call that reached PostToolUse was approved and RAN. File a
+    # redacted forensic record (quarantine / forensic hold) and tally it.
+    # Best-effort, never blocks.
+    if decision == "ask":
+        try:
+            import sentinel_quarantine
+            sentinel_quarantine.hold(payload, decision, category, reason or "")
+            import sentinel_stats
+            sentinel_stats.bump(session_id=payload.get("session_id"), quarantined=1)
+        except Exception:
+            pass
+
     # Only persist when PreToolUse would have asked AND the finding carries a
     # precise, safe-to-trust entity. Anything else: nothing to remember.
     if decision != "ask":

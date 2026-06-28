@@ -475,6 +475,28 @@ def main():
                          summ["today"].get("ask") == 3 and summ["today"].get("deny") == 1
                          and summ["totals"].get("ai_out") == 50 and sp.exists()))
 
+    # ---- QUARANTINE / FORENSIC HOLD -----------------------------------------
+    q_spec = importlib.util.spec_from_file_location("sentinel_quarantine", HOOKS / "sentinel_quarantine.py")
+    q = importlib.util.module_from_spec(q_spec)
+    q_spec.loader.exec_module(q)
+    red = q.redact("export AWS_SECRET_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE ; tok=ghp_abcdefghij1234567890")
+    results.append(check("quarantine: redacts AWS key + GitHub token",
+                         "AKIA" not in red and "ghp_abcdefghij" not in red and "REDACTED" in red))
+    qd = Path(tmpdir) / "quarantine"
+    os.environ["SENTINEL_QUARANTINE_DIR"] = str(qd)
+    try:
+        rid = q.hold({"tool_name": "Bash", "tool_input": {"command": "cat ~/.ssh/id_rsa"},
+                      "tool_response": "leaked=ghp_secrettoken1234567890"}, "ask", "sensitive_path", "x")
+        held = q.list_holds()
+        rec_text = (qd / f"{rid}.json").read_text() if rid else ""
+        released = q.release(rid) if rid else False
+        after = q.list_holds()
+    finally:
+        os.environ.pop("SENTINEL_QUARANTINE_DIR", None)
+    results.append(check("quarantine: hold writes redacted record, list+release roundtrip",
+                         bool(rid) and len(held) == 1 and "ghp_secrettoken" not in rec_text
+                         and released and after == []))
+
     # ---- SUMMARY -------------------------------------------------------------
 
     total = len(results)
