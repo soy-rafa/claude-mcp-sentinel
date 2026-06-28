@@ -5,9 +5,38 @@
 > case Sentinel lets slip, and document everything in the CHANGELOG for the
 > audience. Autonomous via /loop. Newest report at top.
 
-## REPORT (filled when done)
+## REPORT
 
-- Status: **IN PROGRESS** — started 2026-06-28.
+- Status: **SHIPPED v3.1.0** — started 2026-06-28, shipped 2026-06-29. PRIVATE/LOCAL.
+- **Red-team result: 34/34 attacks caught, 0 false positives.** Suite 90/90,
+  precision FP=0/91 recall 44/44.
+- Found + fixed **7 misses** in one config-scan hardening pass (iter 1): malicious
+  `settings.json`/`.mcp.json` config (`scan_config_text`: IMDS / raw public IP /
+  `*_BASE_URL` override / `enableAllProjectMcpServers` / curl-in-hook ~ CVE-2025-59536),
+  MCP server redirected to a localhost/private proxy, and multilingual (ES/EN) prompt
+  injection. Root-caused + fixed an operational bug: a stale `iocs.b64` shadowed live
+  `iocs.json` edits (loader prefers `.b64`) — build no longer coexists with a stale one.
+- Rafa's additions, all shipped:
+  - **(A) Shadow / audit-only mode** (`SENTINEL_SHADOW=on`, be21bd6): never blocks,
+    tallies `would_block` ("would have stopped me N times"). Lets autonomous work run
+    untouched AND measures how often Sentinel would intervene. Cleaner than folder
+    exclusions (which miss IOC strings in commands/commit messages).
+  - **(B) AI-layer prompt-injection hardening** (fa7c1be): fenced+framed untrusted
+    fields in `build_prompt`, plus a deterministic un-promptable backstop that forbids
+    an injected payload from being upgraded to `allow` (caps at `ask`). Audience
+    analysis (is the AI injectable / worth it) written to the CHANGELOG.
+  - **(C) Allowlist hygiene**: Sentinel's own folder added to the default allowlist.
+- **AI-layer evaluation (Rafa's question):** is a per-call AI judge the best way to
+  automate defense? The local engine already resolves the corpus with 0 FP and full
+  recall at zero tokens, so the AI is only useful on genuinely ambiguous `ask` cases.
+  Shadow mode's `would_block` counter is the metric to decide per-user whether that
+  volume justifies the (paid, slower) AI path. Hence AI stays opt-in, off by default,
+  budgeted. Injectable? Any LLM fed attacker text is in principle; the real risk
+  (coercing `allow`) is neutralised by the deterministic backstop in code, which cannot
+  be prompted. Net: the AI is a sharpener, not the primary defense — the deterministic
+  layers are.
+
+## Pre-3.1.0 plan & rails (kept for reference)
 
 ## Objective
 

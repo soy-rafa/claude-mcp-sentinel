@@ -3,7 +3,12 @@
 All notable changes to MCP Sentinel are recorded here. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/). Versioning is [semver](https://semver.org/).
 
-## [Unreleased] — red-team hardening (en curso)
+## [3.1.0] - 2026-06-29 — endurecimiento red-team
+
+> Noche autónoma de red-team (equipo rojo): una batería de "skills maliciosas"
+> inertes atacó a Sentinel capa por capa y combinando vectores. Resultado:
+> **34/34 ataques detectados, 0 falsos positivos**, sin debilitar nada. Resumen
+> para la audiencia abajo; detalle en `RED-TEAM-LOG.md`.
 
 Una **batería de 39 escenarios de "skills maliciosas" inertes** (diseñada por
 agentes adversariales, ver `tests/redteam_check.py`) puso a prueba cada capa de
@@ -56,8 +61,11 @@ todos cerrados, sin introducir falsos positivos.
   cara) aporta poco; si hay muchos casos dudosos reales, la IA evita molestarte en cada
   uno. Por eso va **opt-in y apagada por defecto**, con presupuesto diario de tokens.
 
-### En curso
-- Higiene final + publicación del parche (reinstalar hook, re-encodar IOCs, re-baseline).
+### Cierre del parche
+- Allowlist por defecto incluye la carpeta del propio Sentinel (higiene). IOCs
+  re-empaquetados en `iocs.b64` (AV-safe, 0 firmas en claro), baseline de integridad
+  regenerado, hook de protección reinstalado. Suite 90/90, precisión FP=0/91 recall
+  44/44, red-team 0 fallos / 0 falsos positivos.
 
 ## [3.0.0] - 2026-06-28
 
