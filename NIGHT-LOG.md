@@ -3,11 +3,28 @@
 > Rafa asked for an autonomous overnight build → v3.0 by morning. This file is
 > the plan, the safety rails, and the live progress log. Newest report at top.
 
-## MORNING REPORT (filled in as work completes)
+## MORNING REPORT — 2026-06-28
 
-- Status: **IN PROGRESS** — started 2026-06-28 ~00:10.
-- (This section gets a summary of what shipped, what's green, what's pending,
-  and total token cost, before the session ends.)
+- Status: **STOPPED EARLY — NOT FINISHED.** Reached ~backlog item #2-3 of 16.
+- **Root cause it stalled:** the live Sentinel hook self-blocked the autonomous
+  loop. The hook issues `ask` (interactive permission prompt) and `deny` on the
+  loop's OWN tool calls when they contain IOC strings (commit messages, test
+  commands, fixtures with attack samples). Unattended, an `ask` has nobody to
+  approve → the loop freezes. Confirmed: a commit message containing the
+  Postmark-incident domain got a hard `deny`.
+- **Shipped + green (53/53 tests, FP=0/88, recall=40/40, all committed):**
+  - `record_event` per-session counters (foundation for statusbar/stats).
+  - Backlog #1: integrity hash → full SHA-256 + stale-baseline migration.
+  - Backlog #2: FP regression lock for IOC-in-content (field-scoping).
+  - Ops rails: rate-limit hourly backoff; private/local-only no-push.
+  - (Backlog #3 bypass sigs was already done in v2.7.0.)
+- **NOT built (13 of 16 backlog):** telemetry stats module, statusbar Sentinel
+  segment + AI tokens, **AI-escalation layer**, quarantine/forensic hold, MCP
+  tool-description scanner, IOC auto-sync, injection/obfuscation corpus, etc.
+- **Fix before re-running autonomously:** DISABLE the Sentinel hook for the whole
+  autonomous build (it must not screen its own construction), reinstall + full
+  verify at the end. (Or add a self-exempt for the builder.)
+- Backup intact: tar + git (`c65be75` baseline). Nothing broken; all reversible.
 
 ---
 
@@ -42,6 +59,9 @@ A spectacular but **functional, non-disruptive, intelligent** v3.0:
 5. **AV-safe:** any new threat data base64 at rest. No plaintext IOC dumps.
 6. **Self-block:** when editing files that contain IOC strings, disable the live
    Sentinel hook first, reinstall after (or rely on field-scoping for content).
+   ALSO: never put IOC literals (e.g. the Postmark-incident domain, raw reverse
+   shells) in **commit messages or Bash commands** — the live hook scans the
+   command field and will deny them. Refer to them descriptively instead.
 7. **Nothing destructive / no external side effects** without it being inert by
    default. No network actions on the user's behalf.
 7b. **PRIVATE / LOCAL ONLY (hard rule).** Commit to the local `main` only. NEVER
