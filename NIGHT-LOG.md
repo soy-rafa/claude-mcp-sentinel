@@ -145,5 +145,8 @@ P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
   Pre/Post hooks DISABLED for the whole build. Operative updated.
 - 08:40 — Backlog #4 (injection corpus + obfuscation: zero-width/RTL/Unicode-
   tags/ANSI/HTML comments) done + tested (54/54, FP=0/88, recall=40/40), real
-  scan clean. Committed `0ffd77d`. Next: backlog #5 (telemetry stats module),
-  then #6 (statusbar), #7 (quarantine), #8 (AI-escalation).
+  scan clean. Committed `0ffd77d`.
+- 09:01 — Backlog #5 (telemetry: `hooks/sentinel_stats.py`, atomic fail-open
+  daily/session/totals; record_event feeds it; `--show` CLI) done + tested
+  (55/55, FP=0/88, recall=40/40). Committed. Next: #6 statusbar segment in
+  custom_bar.sh, #7 quarantine, #8 AI-escalation.

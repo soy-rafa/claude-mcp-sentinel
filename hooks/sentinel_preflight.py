@@ -729,6 +729,17 @@ def record_event(payload, decision, category, ai_tokens=0):
         tmp = p.with_suffix(".tmp")
         tmp.write_text(json.dumps(st))
         os.replace(tmp, p)
+        # Feed the shared daily/totals telemetry too (best-effort, fail-open).
+        try:
+            import sentinel_stats
+            d = {decision: 1} if decision in ("deny", "ask", "warn") else {}
+            if ai_tokens:
+                d["escalated"] = 1
+                d["ai_out"] = int(ai_tokens)
+            if d:
+                sentinel_stats.bump(session_id=sid, **d)
+        except Exception:
+            pass
     except Exception:
         pass
 

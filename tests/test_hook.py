@@ -459,6 +459,22 @@ def main():
                          st_ev.get("ask") == 1 and st_ev.get("deny") == 1
                          and st_ev.get("warn", 0) == 0))
 
+    # ---- TELEMETRY (sentinel_stats) -----------------------------------------
+    ss_spec = importlib.util.spec_from_file_location("sentinel_stats", HOOKS / "sentinel_stats.py")
+    ss = importlib.util.module_from_spec(ss_spec)
+    ss_spec.loader.exec_module(ss)
+    sp = Path(tmpdir) / "stats.json"
+    os.environ["SENTINEL_STATS_PATH"] = str(sp)
+    try:
+        ss.bump(session_id="s1", deny=1, ask=2)
+        ss.bump(session_id="s1", ask=1, ai_out=50, escalated=1)
+        summ = ss.summary()
+    finally:
+        os.environ.pop("SENTINEL_STATS_PATH", None)
+    results.append(check("telemetry: atomic bump aggregates today + totals",
+                         summ["today"].get("ask") == 3 and summ["today"].get("deny") == 1
+                         and summ["totals"].get("ai_out") == 50 and sp.exists()))
+
     # ---- SUMMARY -------------------------------------------------------------
 
     total = len(results)
