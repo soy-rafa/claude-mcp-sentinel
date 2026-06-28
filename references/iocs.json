@@ -138,7 +138,17 @@
       "(?i)you\\s+are\\s+now\\s+in\\s+developer\\s+mode",
       "(?i)do\\s+not\\s+(tell|show|mention)\\s+the\\s+user",
       "(?i)hide\\s+this\\s+from\\s+the\\s+user",
-      "(?i)bypass\\s+(safety|security|guidelines)"
+      "(?i)bypass\\s+(safety|security|guidelines)",
+      "(?i)before\\s+(you\\s+)?respond",
+      "(?i)do\\s+not\\s+log\\b",
+      "(?i)\\b(developer|debug|god)\\s+mode\\b",
+      "(?i)<(important|system|secret|admin)>",
+      "(?i)send\\s+(this|it|them|the\\s+\\w+)\\s+to\\s+https?://",
+      "(?i)<!--[^>]*(read|copy|send|exec|curl|cat|\\.env|credential|token|secret)[^>]*-->",
+      "[\\u200b\\u200c\\u200d\\u2060\\ufeff]",
+      "\\u202e",
+      "[\\U000e0000-\\U000e007f]",
+      "\\x1b\\["
     ]
   },
 
