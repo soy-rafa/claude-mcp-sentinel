@@ -190,5 +190,9 @@ P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
 - 10:00 — Backlog #13 (env-injection in MCP args) done. scan_server_spec flags
   command substitution `$(...)`/backticks and secret env-var derefs in MCP
   config args (server as exfil channel, no network sink needed). 74/74, FP=0/88,
-  real scan clean. Committed. Next: #14 cross-platform parity, #15 attack-chain,
-  #16 data-flow cross-server, then SHIP.
+  real scan clean. Committed `482f560`.
+- 10:06 — Backlog #14 (cross-platform parity) done. PowerShell dangerous patterns
+  in iocs.json (IEX DownloadString, iwr|iex, -EncodedCommand, Net.Sockets.TCPClient).
+  Corpus +3 benign PS (allow) +4 attack PS (caught). FP=0/91, recall=44/44, 74/74.
+  Committed. Next: #15 attack-chain/trajectory detection, #16 data-flow cross-server,
+  then SHIP.

@@ -125,7 +125,13 @@
       "(?i)\\bman\\b[^;\\n]*--html=",
       "(?i)\\bgit\\b[^;\\n]*--(upload|receive)-pa\\w*=",
       "(?i)\\brg\\b[^;\\n]*--pre(-glob)?[ =]",
-      "\\$\\{[^}]*@P\\}"
+      "\\$\\{[^}]*@P\\}",
+      "(?i)(iwr|curl|wget|invoke-webrequest)\\s+[^|]*\\|\\s*(iex|invoke-expression)",
+      "(?i)(iex|invoke-expression)\\s*\\(",
+      "(?i)net\\.webclient[^\\n]*downloadstring",
+      "(?i)downloadstring\\s*\\(",
+      "(?i)-enc(odedcommand)?\\s+[A-Za-z0-9+/=]{24,}",
+      "(?i)new-object\\s+net\\.sockets\\.tcpclient"
     ]
   },
 

