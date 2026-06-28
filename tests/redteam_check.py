@@ -64,7 +64,7 @@ def caught_layers(s):
             hit.append("config-scan")
     doc = s.get("skill_doc")
     if isinstance(doc, str) and doc:
-        if cs.scan_injection(doc):
+        if cs.scan_injection(doc) or cs.scan_config_text(doc):
             hit.append("config-scan")
     flow = s.get("dataflow")
     if isinstance(flow, dict) and flow:

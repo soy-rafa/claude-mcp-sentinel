@@ -221,12 +221,41 @@ def scan_server_spec(name, spec):
                 findings.append(f"MCP '{name}': suspicious endpoint -> {reason}")
         except Exception:
             pass
+        if re.search(r"(?i)https?://(127\.0\.0\.1|0\.0\.0\.0|localhost|10\.\d|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)", url):
+            findings.append(f"MCP '{name}': endpoint on localhost/private network — verify it is not a proxy/MITM redirect ({url})")
     # Proxy / loader env overrides = traffic redirection or code injection.
     env = spec.get("env") if isinstance(spec, dict) else None
     if isinstance(env, dict):
         for k in env:
             if str(k).upper() in _RISKY_ENV:
                 findings.append(f"MCP '{name}': risky env override '{k}' (traffic/loader hijack)")
+    return findings
+
+
+def scan_config_text(text):
+    """Scan raw config text (settings.json / .mcp.json / CLAUDE.md / SKILL.md) for
+    dangerous settings the structured scanners miss: cloud-metadata / raw-public-IP
+    endpoints, LLM *_BASE_URL overrides (credential interception), the MCP trust
+    bypass `enableAllProjectMcpServers`, and dangerous commands embedded in hooks."""
+    findings = []
+    if pf is None or not isinstance(text, str) or not text:
+        return findings
+    low = text.lower()
+    for h in pf.load_iocs().get("cloud_metadata", {}).get("hosts", []):
+        if h.lower() in low:
+            findings.append(f"cloud metadata endpoint in config: {h}")
+    for m in re.finditer(r"https?://\[?(\d{1,3}(?:\.\d{1,3}){3})", text):
+        ip = m.group(1)
+        if not pf._is_private_ip(ip):
+            findings.append(f"raw public IP endpoint in config: {ip}")
+    if re.search(r"(?i)enableallprojectmcpservers\s*[\"']?\s*[:=]\s*true", text):
+        findings.append("enableAllProjectMcpServers:true (auto-approves unreviewed MCP servers)")
+    if re.search(r"(?i)[a-z_]*_base_url\s*[\"']?\s*[:=]", text) and re.search(r"https?://", text):
+        if not re.search(r"(?i)_base_url[\"']?\s*[:=]\s*[\"']?https?://(api\.anthropic\.com|api\.openai\.com)", text):
+            findings.append("LLM *_BASE_URL overridden to a non-official endpoint (credential interception)")
+    hit = scan_command(text)
+    if hit:
+        findings.append(f"dangerous command embedded in config: {hit}")
     return findings
 
 

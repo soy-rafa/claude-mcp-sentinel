@@ -45,3 +45,26 @@ fix is a tested commit + an audience-facing CHANGELOG note.
 
 - start — hook disabled, harness + this plan written, scenario workflow wbccsms2k
   launched. Engaging the loop.
+- iter 1 — workflow landed: 39 scenarios extracted to base64 fixture. Harness ran:
+  **7 MISSES, 0 FP**. Fixed all 7 in one coherent config-scan hardening:
+  `scan_config_text` (IMDS/raw-IP/base-url/enableAll/curl-in-hook), localhost/private
+  MCP endpoint flag, multilingual injection patterns. Found + fixed a ROOT-CAUSE bug:
+  the v3.0 `iocs.b64` shadowed live iocs.json edits (load_iocs prefers .b64) — removed
+  it for the build (regenerate at ship). Regressions locked in test_hook (85/85).
+  **Red-team now 34/34 caught, 0 FP.** Suite 85/85, precision FP=0/91, recall 44/44.
+
+## Rafa's additions (fold into the red-team, build next)
+
+- **SHADOW / audit-only mode** (`SENTINEL_SHADOW=on`): the hook evaluates but NEVER
+  blocks — only appends would-be decisions to a log/tally. Answers "don't let Sentinel
+  stop the work" cleanly (better than folder exclusions, which don't cover IOC strings
+  in commands/commit messages) AND gives the count of "Sentinel would have stopped me
+  N times" to judge whether the AI layer is worth automating.
+- **AI-layer prompt-injection hardening + test**: a malicious skill's tool content is
+  sent to the AI escalation. Harden the prompt so embedded instructions can't flip the
+  verdict (treat content as untrusted data, fixed output contract), and add red-team
+  scenarios that try to jailbreak the AI judge → verdict must not flip.
+- **Audience analysis**: is the AI layer worth it (using the shadow tally)? Is it
+  injectable or an internal un-promptable layer? Write up for the CHANGELOG.
+- Folder allowlist hygiene: add `~/.claude/skills/mcp-sentinel` to the user allowlist
+  so normal work on Sentinel's own files isn't nagged in normal mode.

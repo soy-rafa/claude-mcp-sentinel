@@ -154,7 +154,12 @@
       "[\\u200b\\u200c\\u200d\\u2060\\ufeff]",
       "\\u202e",
       "[\\U000e0000-\\U000e007f]",
-      "\\x1b\\["
+      "\\x1b\\[",
+      "(?i)(antes de responder|before (you )?respond)",
+      "(?i)(copia|copy|env[í i]a|send|manda|sube|upload|exfiltr|filtra)\\w*\\b[^\\n]{0,50}https?://",
+      "(?i)ignora\\w*\\s+(las\\s+)?(instrucciones|reglas|lo anterior)",
+      "(?i)no\\s+(le\\s+)?(digas|muestres|menciones)\\s+al?\\s+usuario",
+      "(?i)act[ú u]a\\s+como\\s+(root|admin|superusuario)"
     ]
   },
 
