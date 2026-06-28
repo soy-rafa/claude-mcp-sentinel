@@ -150,6 +150,57 @@ def collect_mcp():
     return out
 
 
+def collect_mcp_specs():
+    """All MCP servers as (source, name, spec_dict)."""
+    out = []
+    for f in mcp_files():
+        data = _read_json(f) if f.exists() else None
+        if not isinstance(data, dict):
+            continue
+        servers = data.get("mcpServers") or data.get("mcp_servers") or {}
+        if isinstance(servers, dict):
+            for name, spec in servers.items():
+                if isinstance(spec, dict):
+                    out.append((str(f), name, spec))
+    return out
+
+
+def _collect_strings(obj):
+    out = []
+    if isinstance(obj, str):
+        out.append(obj)
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            out.extend(_collect_strings(v))
+    elif isinstance(obj, list):
+        for v in obj:
+            out.extend(_collect_strings(v))
+    return out
+
+
+def scan_server_spec(name, spec):
+    """Scan one MCP server spec for (a) dangerous commands and (b) prompt-injection
+    or obfuscation hidden in ANY string field — command, args, env values, url, or
+    a tool/description/instructions field. This is the anti-line-jumping check the
+    PreToolUse hook structurally cannot do (it never sees tools/list)."""
+    findings = []
+    cmd_parts = []
+    if isinstance(spec, dict):
+        if spec.get("command"):
+            cmd_parts.append(str(spec["command"]))
+        if isinstance(spec.get("args"), list):
+            cmd_parts.extend(str(a) for a in spec["args"])
+        if spec.get("url"):
+            cmd_parts.append(str(spec["url"]))
+    hit = scan_command(" ".join(cmd_parts)) if cmd_parts else None
+    if hit:
+        findings.append(f"MCP '{name}': dangerous command {hit}")
+    for s in _collect_strings(spec):
+        for rx in scan_injection(s):
+            findings.append(f"MCP '{name}': hidden-instruction/obfuscation in config /{rx}/")
+    return findings
+
+
 def scan_command(cmd):
     """Reuse the runtime detection logic on a hook/MCP command string."""
     if pf is None:
@@ -233,10 +284,9 @@ def run_scan():
         hit = scan_command(cmd)
         if hit:
             findings["commands"].append(f"hook {event} ({src}): {hit}  ::  {cmd[:120]}")
-    for src, name, cmd in collect_mcp():
-        hit = scan_command(cmd)
-        if hit:
-            findings["commands"].append(f"MCP '{name}' ({src}): {hit}  ::  {cmd[:120]}")
+    for src, name, spec in collect_mcp_specs():
+        for finding in scan_server_spec(name, spec):
+            findings["commands"].append(f"{finding} ({src})")
     for f in doc_files():
         # Sentinel's own files contain injection phrases by design (it documents
         # and tests them) — never flag the tool against itself.

@@ -166,3 +166,9 @@ P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
   in sentinel_ai; escalation skipped once today's spend >= SENTINEL_AI_BUDGET
   (resets per UTC day via stats buckets). 60/60, FP=0/88. Committed.
   Next: #10 MCP tool-description scanner (anti line-jumping), #11-#16.
+- 09:36 — Backlog #10 (MCP server-spec scanner, anti line-jumping) done.
+  `scan_server_spec` in config_scan: flags dangerous commands AND hidden
+  instructions/obfuscation in any spec field (command/args/env/url/description).
+  Wired into run_scan. 63/63, FP=0/88, real scan clean. Committed.
+- INSERTED (Rafa): AV-safety hardening — the build reintroduced plaintext IOCs
+  (iocs.json, test literals). Doing it next before continuing backlog.
