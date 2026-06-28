@@ -53,13 +53,20 @@ fix is a tested commit + an audience-facing CHANGELOG note.
   it for the build (regenerate at ship). Regressions locked in test_hook (85/85).
   **Red-team now 34/34 caught, 0 FP.** Suite 85/85, precision FP=0/91, recall 44/44.
 
+- iter 2 — **DONE (A) SHADOW / audit-only mode**. `_shadow_enabled()` +
+  `SENTINEL_SHADOW=on`: main() downgrades any deny/ask to a non-blocking
+  allow-with-note and tallies `would_block` in session-state + sentinel_stats
+  (shown in the stats report). 2 regression tests (ask AND deny downgraded;
+  would_block==2). Suite 87/87, precision FP=0/91 recall 44/44, redteam 0/0.
+  Answers Rafa's folder-exclusion question. Commit pending below.
+
 ## Rafa's additions (fold into the red-team, build next)
 
-- **SHADOW / audit-only mode** (`SENTINEL_SHADOW=on`): the hook evaluates but NEVER
-  blocks — only appends would-be decisions to a log/tally. Answers "don't let Sentinel
-  stop the work" cleanly (better than folder exclusions, which don't cover IOC strings
-  in commands/commit messages) AND gives the count of "Sentinel would have stopped me
-  N times" to judge whether the AI layer is worth automating.
+- [DONE iter 2] **SHADOW / audit-only mode** (`SENTINEL_SHADOW=on`): the hook evaluates
+  but NEVER blocks — only appends would-be decisions to a log/tally. Answers "don't let
+  Sentinel stop the work" cleanly (better than folder exclusions, which don't cover IOC
+  strings in commands/commit messages) AND gives the count of "Sentinel would have
+  stopped me N times" to judge whether the AI layer is worth automating.
 - **AI-layer prompt-injection hardening + test**: a malicious skill's tool content is
   sent to the AI escalation. Harden the prompt so embedded instructions can't flip the
   verdict (treat content as untrusted data, fixed output contract), and add red-team

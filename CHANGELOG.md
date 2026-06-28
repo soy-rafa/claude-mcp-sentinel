@@ -25,11 +25,20 @@ todos cerrados, sin introducir falsos positivos.
   podía SOMBREAR ediciones nuevas de la base de IOCs porque el cargador lo prefiere.
   Ahora el build no convive con un `.b64` obsoleto; se regenera solo al publicar.
 
+### Nuevo: modo sombra / solo-auditoría (`SENTINEL_SHADOW=on`)
+- Sentinel evalúa cada llamada igual que siempre pero **NUNCA bloquea**: un deny o un
+  ask se rebaja a un permiso silencioso con una nota, y se cuenta como `would_block`
+  ("te habría parado N veces"). Sirve para dos cosas: (1) dejar correr trabajo autónomo
+  sin que Sentinel lo interrumpa, y (2) **medir** cuántas veces intervendría para juzgar
+  si merece la pena activar la capa de IA (más cara). El contador sale en el informe de
+  `sentinel_stats` (`would_block`). Es la respuesta limpia a "¿excluyo carpetas para que
+  no me pare de noche?": mejor que excluir carpetas, porque cubre también los IOCs que
+  aparecen en comandos o mensajes de commit, que una exclusión por carpeta no atrapa.
+
 ### En curso
-- Modo **sombra / audit-only** (no bloquea, solo registra lo que habría bloqueado)
-  para medir cuántas veces Sentinel pararía un flujo legítimo y decidir el papel de
-  la capa de IA. **Endurecimiento anti-inyección de la propia capa de IA** (que un
-  skill no pueda "promptear" al juez IA). Análisis para la audiencia.
+- **Endurecimiento anti-inyección de la propia capa de IA**: que un skill malicioso no
+  pueda "promptear" al juez IA para voltear su veredicto. Análisis para la audiencia
+  (¿merece la pena la IA según el contador `would_block`? ¿es inyectable?).
 
 ## [3.0.0] - 2026-06-28
 

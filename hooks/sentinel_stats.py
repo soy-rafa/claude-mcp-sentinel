@@ -106,8 +106,10 @@ def main():
     t, tot = s["today"], s["totals"]
     print("🛡️ MCP Sentinel telemetry")
     print(f"  Today : deny={t.get('deny',0)} ask={t.get('ask',0)} warn={t.get('warn',0)} "
+          f"would_block={t.get('would_block',0)} "
           f"escalated={t.get('escalated',0)} ai_tokens={t.get('ai_in',0)+t.get('ai_out',0)}")
     print(f"  Totals: deny={tot.get('deny',0)} ask={tot.get('ask',0)} warn={tot.get('warn',0)} "
+          f"would_block={tot.get('would_block',0)} "
           f"escalated={tot.get('escalated',0)} ai_tokens={tot.get('ai_in',0)+tot.get('ai_out',0)}")
     return 0
 

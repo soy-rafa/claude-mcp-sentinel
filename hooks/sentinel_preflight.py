@@ -565,6 +565,15 @@ HARD_DENY_CATEGORIES = ("known_malicious", "feed_blocklist")
 AUTO_REMEMBER_CATEGORIES = ("sensitive_path", "suspicious_network")
 
 
+def _shadow_enabled():
+    """Audit-only mode. When SENTINEL_SHADOW is on/1/true/yes, Sentinel evaluates
+    every call exactly as usual but NEVER blocks: deny/ask are downgraded to a
+    non-blocking allow and tallied as 'would_block'. Lets autonomous work run
+    unhindered while measuring how often Sentinel WOULD have intervened, which is
+    the data needed to judge whether the (costlier) AI layer earns its keep."""
+    return os.environ.get("SENTINEL_SHADOW", "").strip().lower() in ("1", "on", "true", "yes")
+
+
 # ---------------------------------------------------------------------------
 # Localisation. Messages are shown in Spanish when the user writes in Spanish,
 # English otherwise. Detection runs only when a message is actually emitted
@@ -689,6 +698,12 @@ _MSG = {
         "es": ("🛡️ MCP Sentinel: aprobaste una llamada marcada de {tool}, así que '{entity}' ahora es "
                "de confianza y no se volverá a marcar. Quítalo de {target} para deshacer."),
     },
+    "shadow": {
+        "en": ("🛡️ MCP Sentinel [SHADOW]: this {tool} call would normally be {decision}, but "
+               "audit-only mode (SENTINEL_SHADOW) is on, so it is allowed.\nReason: {reason}"),
+        "es": ("🛡️ MCP Sentinel [SOMBRA]: esta llamada de {tool} normalmente sería {decision}, pero el "
+               "modo solo-auditoría (SENTINEL_SHADOW) está activo, así que se permite.\nMotivo: {reason}"),
+    },
 }
 
 
@@ -727,11 +742,13 @@ def detect_attack_chain(events):
     return None
 
 
-def record_event(payload, decision, category, ai_tokens=0):
+def record_event(payload, decision, category, ai_tokens=0, would_block=False):
     """Tally a flagged decision into the per-session state file that the statusbar
     and stats command read. Only deny/ask/warn are recorded (allow is the silent
-    hot path, never touched). Fully fail-safe: any error is swallowed so the hook
-    is never broken by bookkeeping."""
+    hot path, never touched). When would_block is set (audit-only/shadow mode), the
+    real would-be decision is still tallied AND a 'would_block' counter is bumped
+    so we can report "Sentinel would have stopped me N times". Fully fail-safe: any
+    error is swallowed so the hook is never broken by bookkeeping."""
     try:
         if decision == "allow":
             return
@@ -742,10 +759,12 @@ def record_event(payload, decision, category, ai_tokens=0):
             st = json.loads(p.read_text())
         except Exception:
             st = {}
-        for k in ("deny", "ask", "warn", "escalated", "ai_tokens"):
+        for k in ("deny", "ask", "warn", "escalated", "ai_tokens", "would_block"):
             st.setdefault(k, 0)
         if decision in ("deny", "ask", "warn"):
             st[decision] += 1
+        if would_block:
+            st["would_block"] += 1
         if ai_tokens:
             st["escalated"] += 1
             st["ai_tokens"] += int(ai_tokens)
@@ -767,6 +786,8 @@ def record_event(payload, decision, category, ai_tokens=0):
         try:
             import sentinel_stats
             d = {decision: 1} if decision in ("deny", "ask", "warn") else {}
+            if would_block:
+                d["would_block"] = 1
             if ai_tokens:
                 d["escalated"] = 1
                 d["ai_out"] = int(ai_tokens)
@@ -830,6 +851,24 @@ def main():
     if decision == "allow":
         # Silent allow: no stdout means the call proceeds normally without
         # adding any message to the conversation context.
+        return
+
+    # Audit-only / shadow mode: never block. Record the would-be deny/ask as a
+    # 'would_block', then let the call through with a non-blocking note. This is
+    # how Sentinel can run alongside autonomous work without ever stopping it
+    # while still measuring how often it WOULD have intervened.
+    if _shadow_enabled() and decision in ("deny", "ask"):
+        record_event(payload, decision, category, would_block=True)
+        tool_name = payload.get("tool_name") or payload.get("tool", "<unknown>")
+        lang = detect_language(payload)
+        message = render("shadow", lang, tool=tool_name, reason=reason, decision=decision)
+        print(json.dumps({
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "allow",
+                "additionalContext": message,
+            },
+        }))
         return
 
     # Only flagged calls (deny/ask/warn) reach here — record for the statusbar.
