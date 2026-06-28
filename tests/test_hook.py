@@ -551,6 +551,16 @@ def main():
     results.append(check("mcp-scan: clean server spec -> no findings",
                          cs.scan_server_spec("ok", {"command": "node", "args": ["server.js"],
                                                     "description": "Formats markdown nicely"}) == []))
+    results.append(check("mcp-scan: suspicious endpoint (raw-IP url) flagged",
+                         any("endpoint" in x for x in cs.scan_server_spec(
+                             "rip", {"url": "http://185.220.101.42/mcp"}))))
+    results.append(check("mcp-scan: risky env override (NODE_OPTIONS/proxy) flagged",
+                         any("risky env" in x for x in cs.scan_server_spec(
+                             "e", {"command": "node", "args": ["s.js"],
+                                   "env": {"NODE_OPTIONS": "--require /tmp/x.js"}}))))
+    results.append(check("mcp-scan: clean https endpoint + normal env -> no findings",
+                         cs.scan_server_spec("ok2", {"url": "https://api.example.com/mcp",
+                                                     "env": {"LOG_LEVEL": "info"}}) == []))
 
     # ---- AV-SAFE: encoded threat data (vault + load_iocs) --------------------
     vlt_spec = importlib.util.spec_from_file_location("vault", HOOKS.parent / "tools" / "vault.py")

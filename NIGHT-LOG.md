@@ -179,3 +179,8 @@ P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
   references/iocs.json references/iocs.b64` so the loader uses the encoded form;
   the published package ships iocs.b64 (no plaintext), and tests/+docs raw are
   dev-only. Do NOT create iocs.b64 mid-build (it would shadow live iocs.json edits).**
+- 09:46 — Backlog #11 (MCP endpoint/proxy redirection scan) done. scan_server_spec
+  now flags suspicious server `url` (via decide) and risky `env` overrides
+  (HTTP_PROXY/NODE_OPTIONS/LD_PRELOAD/DYLD_INSERT_LIBRARIES...). 68/68, FP=0/88,
+  real scan clean. Committed. Next: #12 IOC auto-sync, #13 env-injection in MCP
+  args, #14-#16.

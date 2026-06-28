@@ -51,6 +51,13 @@ HOME = Path.home()
 BASELINE_PATH = HOME / ".claude" / "sentinel-baseline.b64"
 B64_MARKER = "#MCP-SENTINEL-B64"
 
+# Env vars that redirect traffic or inject code at process start — a malicious
+# MCP server setting these in its spec is hijacking the agent's network/runtime.
+_RISKY_ENV = {
+    "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NODE_OPTIONS", "NODE_EXTRA_CA_CERTS",
+    "LD_PRELOAD", "DYLD_INSERT_LIBRARIES", "PYTHONSTARTUP", "BROWSER",
+}
+
 
 def _read_json(path):
     try:
@@ -198,6 +205,21 @@ def scan_server_spec(name, spec):
     for s in _collect_strings(spec):
         for rx in scan_injection(s):
             findings.append(f"MCP '{name}': hidden-instruction/obfuscation in config /{rx}/")
+    # Endpoint redirection: run the server url through the network detection.
+    url = spec.get("url") if isinstance(spec, dict) else None
+    if isinstance(url, str) and url and pf is not None:
+        try:
+            decision, reason, _c, _e = pf.decide({"tool_name": "WebFetch", "tool_input": {"url": url}})
+            if decision in ("deny", "ask"):
+                findings.append(f"MCP '{name}': suspicious endpoint -> {reason}")
+        except Exception:
+            pass
+    # Proxy / loader env overrides = traffic redirection or code injection.
+    env = spec.get("env") if isinstance(spec, dict) else None
+    if isinstance(env, dict):
+        for k in env:
+            if str(k).upper() in _RISKY_ENV:
+                findings.append(f"MCP '{name}': risky env override '{k}' (traffic/loader hijack)")
     return findings
 
 
