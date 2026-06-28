@@ -12,6 +12,10 @@
   + precision, re-establish the integrity baseline, and write the final report.
 - Each iteration NO LONGER disables/reinstalls per-edit (global disable handles
   it). Picks up from backlog #4.
+- **FINAL OUTPUT (when the loop ends after SHIP):** the closing turn must run
+  `git log --oneline` and present the FULL v3 commit list to Rafa, plus the
+  MORNING REPORT summary (features shipped, tests green, version, token cost).
+  Rafa explicitly asked to see the git log at the end.
 
 ## PRIOR MORNING REPORT — 2026-06-28 (first run, stopped early)
 
