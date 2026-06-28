@@ -167,7 +167,8 @@
     "description": "Paths and domains explicitly allowed to reduce false positives. Users extend this in their .security/sentinel-allowlist.json or ~/.claude/sentinel-allowlist.json.",
     "paths": [
       "/tmp/",
-      "/var/tmp/"
+      "/var/tmp/",
+      "~/.claude/skills/mcp-sentinel/"
     ],
     "domains": [
       "api.anthropic.com",
