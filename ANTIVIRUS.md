@@ -15,10 +15,16 @@ whole industry hits this — ClamAV, YARA, Sigma, Snyk, abuse.ch/URLhaus all do.
 
 ## What MCP Sentinel does to avoid it
 
-- **Threat data is base64-encoded at rest.** The malware-domain blocklist
-  (`references/blocklist-feed.*`) is stored encoded (marker `#MCP-SENTINEL-B64`)
-  and decoded only in memory by the hook. An antivirus scanning the file sees a
-  base64 blob, not ~400 live malware domains.
+- **Threat data is base64-encoded at rest.** Both the IOC library
+  (`references/iocs.b64` — the dangerous-command regexes, reverse-shell patterns,
+  known-bad domains) and the malware-domain blocklist (`references/blocklist-feed.*`)
+  are stored encoded (marker `#MCP-SENTINEL-B64`) and decoded only in memory by the
+  hook (`load_iocs`/`load_feed_domains`). An antivirus scanning these files sees a
+  base64 blob, not signatures. Encode with `python3 tools/vault.py encode <file>`.
+- **The shipped package contains no plaintext signatures.** The published skill
+  ships the encoded `iocs.b64` (not a plaintext `iocs.json`). The test suite and
+  raw research dumps (`tests/`, `docs/*-raw*`) are development-only and are not
+  part of an end-user install; exclude them if you keep a dev checkout.
 - **Attack test fixtures are base64-encoded** (`tests/fixtures/attack_corpus.b64.json`).
   No file in the repo contains plaintext reverse shells or exfil payloads.
 - **The blocklist is fetched, not shipped as a static signature DB.** Run

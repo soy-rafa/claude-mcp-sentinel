@@ -552,6 +552,27 @@ def main():
                          cs.scan_server_spec("ok", {"command": "node", "args": ["server.js"],
                                                     "description": "Formats markdown nicely"}) == []))
 
+    # ---- AV-SAFE: encoded threat data (vault + load_iocs) --------------------
+    vlt_spec = importlib.util.spec_from_file_location("vault", HOOKS.parent / "tools" / "vault.py")
+    vlt = importlib.util.module_from_spec(vlt_spec)
+    vlt_spec.loader.exec_module(vlt)
+    v_src = Path(tmpdir) / "x.json"
+    v_src.write_text(json.dumps({"k": "value"}))
+    enc_path = vlt.encode(v_src)
+    dec_path = vlt.decode(enc_path, Path(tmpdir) / "x-dec.json")
+    results.append(check("av-safe: vault encode marks base64, decode round-trips",
+                         enc_path.read_text().splitlines()[0] == "#MCP-SENTINEL-B64"
+                         and json.loads(dec_path.read_text()) == {"k": "value"}))
+    iocs_enc = Path(tmpdir) / "iocs.b64"
+    vlt.encode(HOOKS.parent / "references" / "iocs.json", iocs_enc)
+    os.environ["SENTINEL_IOCS_PATH"] = str(iocs_enc)
+    try:
+        loaded_iocs = pf.load_iocs()
+    finally:
+        os.environ.pop("SENTINEL_IOCS_PATH", None)
+    results.append(check("av-safe: load_iocs decodes encoded iocs.b64 (ship without plaintext signatures)",
+                         "sensitive_paths" in loaded_iocs and "dangerous_commands" in loaded_iocs))
+
     # ---- SUMMARY -------------------------------------------------------------
 
     total = len(results)

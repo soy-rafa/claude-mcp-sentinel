@@ -63,18 +63,22 @@ def _maybe_decode(text):
 
 
 def load_iocs():
-    """Load the bundled IOCs file. Falls back to empty if missing."""
-    # The script lives in hooks/ and iocs.json lives in ../references/.
-    # Try relative first, then absolute via common install locations.
-    candidates = [
-        Path(__file__).parent.parent / "references" / "iocs.json",
-        Path.home() / ".claude" / "skills" / "mcp-sentinel" / "references" / "iocs.json",
-        Path.cwd() / ".claude" / "skills" / "mcp-sentinel" / "references" / "iocs.json",
-    ]
+    """Load the bundled IOC library. Prefers the base64-encoded `iocs.b64` (so a
+    host antivirus never sees plaintext malware signatures and flags the install)
+    and falls back to readable `iocs.json` for development. Decodes in memory."""
+    override = os.environ.get("SENTINEL_IOCS_PATH")
+    if override:
+        candidates = [Path(override)]
+    else:
+        candidates = []
+        for base in (Path(__file__).parent.parent / "references",
+                     Path.home() / ".claude" / "skills" / "mcp-sentinel" / "references",
+                     Path.cwd() / ".claude" / "skills" / "mcp-sentinel" / "references"):
+            candidates += [base / "iocs.b64", base / "iocs.json"]
     for path in candidates:
         if path.exists():
             try:
-                return json.loads(path.read_text())
+                return json.loads(_maybe_decode(path.read_text()))
             except Exception:
                 continue
     return {}

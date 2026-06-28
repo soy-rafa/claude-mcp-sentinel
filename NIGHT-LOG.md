@@ -170,5 +170,12 @@ P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
   `scan_server_spec` in config_scan: flags dangerous commands AND hidden
   instructions/obfuscation in any spec field (command/args/env/url/description).
   Wired into run_scan. 63/63, FP=0/88, real scan clean. Committed.
-- INSERTED (Rafa): AV-safety hardening — the build reintroduced plaintext IOCs
-  (iocs.json, test literals). Doing it next before continuing backlog.
+- INSERTED (Rafa): AV-safety hardening. Done: `tools/vault.py` (encode/decode
+  base64 at rest); `load_iocs` now prefers encoded `iocs.b64`, falls back to
+  iocs.json (absent during dev → no effect); tests cover roundtrip + encoded
+  load (65/65, FP=0/88). Demo: encoded iocs.json → grep of reverse-shell/domain
+  signatures = 0. ANTIVIRUS.md updated. Committed.
+  **SHIP STEP (do at final reinstall): `python3 tools/vault.py encode
+  references/iocs.json references/iocs.b64` so the loader uses the encoded form;
+  the published package ships iocs.b64 (no plaintext), and tests/+docs raw are
+  dev-only. Do NOT create iocs.b64 mid-build (it would shadow live iocs.json edits).**
