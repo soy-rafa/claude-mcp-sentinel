@@ -146,7 +146,9 @@ P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
 - 08:40 — Backlog #4 (injection corpus + obfuscation: zero-width/RTL/Unicode-
   tags/ANSI/HTML comments) done + tested (54/54, FP=0/88, recall=40/40), real
   scan clean. Committed `0ffd77d`.
-- 09:01 — Backlog #5 (telemetry: `hooks/sentinel_stats.py`, atomic fail-open
-  daily/session/totals; record_event feeds it; `--show` CLI) done + tested
-  (55/55, FP=0/88, recall=40/40). Committed. Next: #6 statusbar segment in
-  custom_bar.sh, #7 quarantine, #8 AI-escalation.
+- 09:01 — Backlog #5 (telemetry `sentinel_stats.py`) done. `e5e5c18`.
+- 09:08 — Backlog #6 (statusbar segment) done. Extended ~/.claude/custom_bar.sh
+  (live, OUTSIDE repo, backed up): shows `🛡 SNTL:ON/OFF ⚑N AI:Nk` from
+  stats.json, Bash+jq only, clean fallback when no stats. Versioned copy at
+  docs/statusbar-snippet.sh. Render verified both paths; suite 55/55, FP=0/88.
+  Next: #7 quarantine, #8 AI-escalation.
