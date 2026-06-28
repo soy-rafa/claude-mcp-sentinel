@@ -194,5 +194,9 @@ P0 / foundations (no research needed, from Rafa's directives + v3 proposal):
 - 10:06 — Backlog #14 (cross-platform parity) done. PowerShell dangerous patterns
   in iocs.json (IEX DownloadString, iwr|iex, -EncodedCommand, Net.Sockets.TCPClient).
   Corpus +3 benign PS (allow) +4 attack PS (caught). FP=0/91, recall=44/44, 74/74.
-  Committed. Next: #15 attack-chain/trajectory detection, #16 data-flow cross-server,
-  then SHIP.
+  Committed `07056ca`.
+- 10:12 — Backlog #15 (attack-chain / trajectory) done. `detect_attack_chain`
+  over the session's recent-events ring: flags cred-access -> network-egress
+  (exfil chain) and 3+ credential accesses (harvesting); record_event maintains
+  the ring + chain flag + bumps stats. 78/78, FP=0/91, recall=44/44. Committed.
+  Next: #16 data-flow cross-server (PostToolUse), then SHIP.

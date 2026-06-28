@@ -706,6 +706,27 @@ def _state_path(session_id):
     return base / f"{sid}.json"
 
 
+_CHAIN_CRED = {"sensitive_path", "sensitive_env"}
+_CHAIN_EGRESS = {"suspicious_network", "feed_blocklist", "cloud_metadata"}
+
+
+def detect_attack_chain(events):
+    """Deterministic multi-step attack detection over a session's recent flagged
+    events (chronological). Catches what a single call can't: a credential access
+    FOLLOWED BY a network egress (exfiltration chain), or several credential
+    accesses (harvesting). Returns a one-line finding or None."""
+    cats = [e.get("category") for e in events if isinstance(e, dict)]
+    seen_cred = False
+    for c in cats:
+        if c in _CHAIN_CRED:
+            seen_cred = True
+        elif c in _CHAIN_EGRESS and seen_cred:
+            return "credential access followed by network egress (possible exfiltration chain)"
+    if sum(1 for c in cats if c in _CHAIN_CRED) >= 3:
+        return "multiple credential accesses (possible harvesting)"
+    return None
+
+
 def record_event(payload, decision, category, ai_tokens=0):
     """Tally a flagged decision into the per-session state file that the statusbar
     and stats command read. Only deny/ask/warn are recorded (allow is the silent
@@ -730,6 +751,15 @@ def record_event(payload, decision, category, ai_tokens=0):
             st["ai_tokens"] += int(ai_tokens)
         st["last"] = {"decision": decision, "category": category, "ts": int(time.time())}
         st["updated"] = st["last"]["ts"]
+        # Maintain a small ring of recent flagged events and run trajectory
+        # detection (multi-step attack chains across the session).
+        recent = st.get("recent") or []
+        recent.append({"category": category, "ts": st["last"]["ts"]})
+        st["recent"] = recent[-10:]
+        chain = detect_attack_chain(st["recent"])
+        had_chain = bool(st.get("chain"))
+        if chain:
+            st["chain"] = chain
         tmp = p.with_suffix(".tmp")
         tmp.write_text(json.dumps(st))
         os.replace(tmp, p)
@@ -740,6 +770,8 @@ def record_event(payload, decision, category, ai_tokens=0):
             if ai_tokens:
                 d["escalated"] = 1
                 d["ai_out"] = int(ai_tokens)
+            if chain and not had_chain:
+                d["chains"] = 1
             if d:
                 sentinel_stats.bump(session_id=sid, **d)
         except Exception:

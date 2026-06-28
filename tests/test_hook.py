@@ -459,6 +459,32 @@ def main():
                          st_ev.get("ask") == 1 and st_ev.get("deny") == 1
                          and st_ev.get("warn", 0) == 0))
 
+    # ---- ATTACK-CHAIN / TRAJECTORY (#15) ------------------------------------
+    results.append(check("attack-chain: cred access then egress -> exfiltration chain",
+                         "exfiltration chain" in (pf.detect_attack_chain(
+                             [{"category": "sensitive_path"}, {"category": "suspicious_network"}]) or "")))
+    results.append(check("attack-chain: 3 credential accesses -> harvesting",
+                         "harvesting" in (pf.detect_attack_chain(
+                             [{"category": "sensitive_env"}, {"category": "sensitive_path"},
+                              {"category": "sensitive_path"}]) or "")))
+    results.append(check("attack-chain: egress-before-cred / lone command -> no chain",
+                         pf.detect_attack_chain([{"category": "suspicious_network"},
+                                                 {"category": "sensitive_path"}]) is None
+                         and pf.detect_attack_chain([{"category": "dangerous_command"}]) is None))
+    state_dir2 = Path(tmpdir) / "state2"
+    os.environ["SENTINEL_STATE_DIR"] = str(state_dir2)
+    os.environ["SENTINEL_STATS_PATH"] = str(Path(tmpdir) / "chain-stats.json")
+    try:
+        pf.record_event({"session_id": "chainsess"}, "ask", "sensitive_path")
+        pf.record_event({"session_id": "chainsess"}, "ask", "suspicious_network")
+        st_chain = json.loads((state_dir2 / "chainsess.json").read_text())
+    finally:
+        os.environ.pop("SENTINEL_STATE_DIR", None)
+        os.environ.pop("SENTINEL_STATS_PATH", None)
+    results.append(check("attack-chain: record_event flags chain in session state",
+                         len(st_chain.get("recent", [])) == 2
+                         and "exfiltration chain" in st_chain.get("chain", "")))
+
     # ---- TELEMETRY (sentinel_stats) -----------------------------------------
     ss_spec = importlib.util.spec_from_file_location("sentinel_stats", HOOKS / "sentinel_stats.py")
     ss = importlib.util.module_from_spec(ss_spec)
