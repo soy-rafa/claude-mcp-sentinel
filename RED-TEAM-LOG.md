@@ -7,6 +7,26 @@
 
 ## REPORT
 
+### Battery 2 — real-world documented cases (2026-06-29, post-3.1.0)
+- A second, INDEPENDENT battery built from real documented incidents/techniques
+  (a 7-angle research workflow → inert scenarios): Postmark MCP backdoor / npm
+  rug-pulls, tool poisoning + line jumping (Invariant Labs / Trail of Bits),
+  malicious skills/SKILL.md prompt injection, credential exfiltration, persistence
+  & RCE (CVE-2025-59536, CVE-2025-66032 bypasses), and indirect/cross-tool
+  injection + cloud IMDS. Fixture: `tests/fixtures/redteam_scenarios_real.json`
+  (base64). Harness now takes an optional fixture path:
+  `python3 tests/redteam_check.py tests/fixtures/redteam_scenarios_real.json`.
+- **Result: 30/30 attacks caught, 0 false positives** on 6 benign look-alike
+  decoys. Stronger check: every attack is caught by the EXACT layer it should be
+  (decide / attack-chain / config-scan / dataflow), not by an incidental IOC — 0
+  partial seams. No code fix needed; v3.1.0 already covers these patterns.
+- Caveat: the dedicated *supply-chain* design agent was blocked by the platform's
+  usage-policy content filter (ironic for defensive red-team), so that bucket has
+  no dedicated scenarios; supply-chain patterns (`*_BASE_URL` LLM-traffic hijack,
+  typosquat MCP) are still partially exercised by other buckets + `scan_config_text`.
+
+---
+
 - Status: **SHIPPED v3.1.0** — started 2026-06-28, shipped 2026-06-29. PRIVATE/LOCAL.
 - **Red-team result: 34/34 attacks caught, 0 false positives.** Suite 90/90,
   precision FP=0/91 recall 44/44.

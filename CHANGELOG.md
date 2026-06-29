@@ -9,6 +9,15 @@ All notable changes to MCP Sentinel are recorded here. Format roughly follows
 > inertes atacó a Sentinel capa por capa y combinando vectores. Resultado:
 > **34/34 ataques detectados, 0 falsos positivos**, sin debilitar nada. Resumen
 > para la audiencia abajo; detalle en `RED-TEAM-LOG.md`.
+>
+> **Segunda batería, casos reales (2026-06-29):** una tanda independiente, esta vez
+> recreando incidentes REALES y documentados (backdoor del MCP de Postmark, tool
+> poisoning y "line jumping", inyección en SKILL.md, robo de credenciales,
+> persistencia/RCE por config, CVE-2025-59536 y CVE-2025-66032, inyección
+> cross-tool e IMDS cloud). **30/30 ataques detectados, 0 falsos positivos** en 6
+> señuelos benignos parecidos; cada ataque lo caza la capa correcta. Sin tocar
+> código: v3.1.0 ya cubría estos patrones. Inerte (solo datos, nada se ejecuta);
+> fixture base64 `tests/fixtures/redteam_scenarios_real.json`.
 
 Una **batería de 39 escenarios de "skills maliciosas" inertes** (diseñada por
 agentes adversariales, ver `tests/redteam_check.py`) puso a prueba cada capa de

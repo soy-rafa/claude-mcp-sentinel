@@ -76,12 +76,16 @@ def caught_layers(s):
 
 
 def main():
-    if not SCEN.exists():
-        print(f"No scenarios at {SCEN} yet.")
+    # Optional fixture path arg lets us run alternative batteries (e.g. real-world
+    # cases) without touching the default one.
+    scen = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else SCEN
+    if not scen.exists():
+        print(f"No scenarios at {scen} yet.")
         return 0
     _hermetic_env()
+    print(f"battery: {scen.name}")
     # Fixture may be base64-wrapped (AV-safe, it holds attack payloads).
-    scenarios = json.loads(pf._maybe_decode(SCEN.read_text()))
+    scenarios = json.loads(pf._maybe_decode(scen.read_text()))
     misses, fps, caught, benign_ok = [], [], 0, 0
     for s in scenarios:
         expected = s.get("expected_layers") or []
