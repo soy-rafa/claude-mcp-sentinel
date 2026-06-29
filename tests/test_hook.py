@@ -41,6 +41,15 @@ POSTFLIGHT = HOOKS / "sentinel_postflight.py"
 PASS = "✅"
 FAIL = "❌"
 
+# Isolated telemetry sink for the subprocess hooks. Without this, every run_hook
+# call writes to the user's real ~/.claude/sentinel/stats.json and ~/.claude/
+# sentinel-state, polluting live counters just by running the test suite. We
+# default the subprocess env to throwaway paths; a test that needs to inspect a
+# specific stats/state file still sets its own in os.environ, which is preserved.
+_ISO_DIR = tempfile.mkdtemp(prefix="sentinel-test-telemetry-")
+_ISO_STATS = str(Path(_ISO_DIR) / "stats.json")
+_ISO_STATE = str(Path(_ISO_DIR) / "state")
+
 
 def _env(allowlist_path, feed_path=None, lang=None):
     env = dict(os.environ)
@@ -52,6 +61,10 @@ def _env(allowlist_path, feed_path=None, lang=None):
         env["SENTINEL_LANG"] = lang
     else:
         env.pop("SENTINEL_LANG", None)
+    # Keep test runs from touching real telemetry; a test that set these in
+    # os.environ for its own assertion keeps its value (setdefault).
+    env.setdefault("SENTINEL_STATS_PATH", _ISO_STATS)
+    env.setdefault("SENTINEL_STATE_DIR", _ISO_STATE)
     return env
 
 
@@ -448,6 +461,7 @@ def main():
     # ---- SESSION STATE (statusbar counters) ---------------------------------
     state_dir = Path(tmpdir) / "state"
     os.environ["SENTINEL_STATE_DIR"] = str(state_dir)
+    os.environ["SENTINEL_STATS_PATH"] = str(Path(tmpdir) / "state-stats.json")
     try:
         pf.record_event({"session_id": "testsess", "tool_name": "Read"}, "ask", "sensitive_path")
         pf.record_event({"session_id": "testsess"}, "deny", "known_malicious")
@@ -455,6 +469,7 @@ def main():
         st_ev = json.loads((state_dir / "testsess.json").read_text())
     finally:
         os.environ.pop("SENTINEL_STATE_DIR", None)
+        os.environ.pop("SENTINEL_STATS_PATH", None)
     results.append(check("session-state: ask+deny counted, allow ignored",
                          st_ev.get("ask") == 1 and st_ev.get("deny") == 1
                          and st_ev.get("warn", 0) == 0))
