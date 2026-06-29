@@ -16,14 +16,22 @@
   injection + cloud IMDS. Fixture: `tests/fixtures/redteam_scenarios_real.json`
   (base64). Harness now takes an optional fixture path:
   `python3 tests/redteam_check.py tests/fixtures/redteam_scenarios_real.json`.
-- **Result: 30/30 attacks caught, 0 false positives** on 6 benign look-alike
+- **Result: 35/35 attacks caught, 0 false positives** on 7 benign look-alike
   decoys. Stronger check: every attack is caught by the EXACT layer it should be
   (decide / attack-chain / config-scan / dataflow), not by an incidental IOC — 0
   partial seams. No code fix needed; v3.1.0 already covers these patterns.
-- Caveat: the dedicated *supply-chain* design agent was blocked by the platform's
-  usage-policy content filter (ironic for defensive red-team), so that bucket has
-  no dedicated scenarios; supply-chain patterns (`*_BASE_URL` LLM-traffic hijack,
-  typosquat MCP) are still partially exercised by other buckets + `scan_config_text`.
+- Supply-chain bucket: the workflow's dedicated design agent was blocked by the
+  platform's usage-policy content filter (ironic for defensive red-team), so those
+  6 scenarios were hand-authored instead: typosquat MCP with malicious postinstall,
+  `*_BASE_URL` LLM-traffic hijack, CI secret exfil, malicious editor extension
+  (cred-read → egress chain), trojaned dependency postinstall, + a benign install
+  decoy. All caught by the expected layer. Note found while authoring: an exfil
+  curl to an UNKNOWN host (not in any badlist) only trips the chain's first half
+  (the credential read still asks, stopping the attack); real stealers exfil to
+  webhook.site/pastebin/raw-IP, which Sentinel does recognize, so the full chain
+  fires — the scenario uses the realistic destination.
+- Default runner now aggregates ALL `redteam_scenarios*.json`: 34 + 35 = **69
+  attacks, 0 missed, 0 FP**.
 
 ---
 

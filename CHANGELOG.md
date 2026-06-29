@@ -14,10 +14,13 @@ All notable changes to MCP Sentinel are recorded here. Format roughly follows
 > recreando incidentes REALES y documentados (backdoor del MCP de Postmark, tool
 > poisoning y "line jumping", inyección en SKILL.md, robo de credenciales,
 > persistencia/RCE por config, CVE-2025-59536 y CVE-2025-66032, inyección
-> cross-tool e IMDS cloud). **30/30 ataques detectados, 0 falsos positivos** en 6
-> señuelos benignos parecidos; cada ataque lo caza la capa correcta. Sin tocar
-> código: v3.1.0 ya cubría estos patrones. Inerte (solo datos, nada se ejecuta);
-> fixture base64 `tests/fixtures/redteam_scenarios_real.json`.
+> cross-tool e IMDS cloud, más una tanda de supply-chain: typosquat de MCP con
+> postinstall malicioso, hijack de tráfico LLM por `*_BASE_URL`, exfil de secrets
+> en CI, extensión de editor maliciosa, dependencia troyanizada). **35/35 ataques
+> detectados, 0 falsos positivos** en 7 señuelos benignos parecidos; cada ataque lo
+> caza la capa correcta. Sin tocar código: v3.1.0 ya cubría estos patrones. Inerte
+> (solo datos, nada se ejecuta); fixture base64 `tests/fixtures/redteam_scenarios_real.json`.
+> El runner por defecto agrega las dos baterías: **69 ataques, 0 fallos, 0 FP**.
 
 Una **batería de 39 escenarios de "skills maliciosas" inertes** (diseñada por
 agentes adversariales, ver `tests/redteam_check.py`) puso a prueba cada capa de
