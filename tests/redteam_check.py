@@ -14,7 +14,8 @@ Scenarios: tests/fixtures/redteam_scenarios.json — a list of objects with any 
   - dataflow:   {source, output, dest, dest_text} -> cross-server flow
   - expected_layers: [...]  (empty == benign, must NOT be flagged)
 
-Run:  python3 tests/redteam_check.py
+Run:  python3 tests/redteam_check.py                 # ALL batteries (default + real)
+      python3 tests/redteam_check.py <fixture.json>  # just one battery
 """
 
 import json
@@ -75,23 +76,14 @@ def caught_layers(s):
     return sorted(set(hit))
 
 
-def main():
-    # Optional fixture path arg lets us run alternative batteries (e.g. real-world
-    # cases) without touching the default one.
-    scen = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else SCEN
-    if not scen.exists():
-        print(f"No scenarios at {scen} yet.")
-        return 0
-    _hermetic_env()
-    print(f"battery: {scen.name}")
-    # Fixture may be base64-wrapped (AV-safe, it holds attack payloads).
-    scenarios = json.loads(pf._maybe_decode(scen.read_text()))
+def run_battery(scen_path):
+    """Run one fixture. Returns (attacks, caught, misses, benign, benign_ok, fps)."""
+    scenarios = json.loads(pf._maybe_decode(scen_path.read_text()))
     misses, fps, caught, benign_ok = [], [], 0, 0
     for s in scenarios:
         expected = s.get("expected_layers") or []
         layers = caught_layers(s)
-        is_benign = (len(expected) == 0)
-        if is_benign:
+        if len(expected) == 0:  # benign decoy
             if layers:
                 fps.append((s.get("id"), s.get("name"), layers))
             else:
@@ -101,17 +93,40 @@ def main():
                 caught += 1
             else:
                 misses.append((s.get("id"), s.get("name"), s.get("vectors"), s.get("why_dangerous", "")[:80]))
-
     attacks = sum(1 for s in scenarios if (s.get("expected_layers") or []))
     benign = len(scenarios) - attacks
-    print(f"ATTACKS: {attacks} | caught: {caught} | MISSED: {len(misses)}")
-    for mid, name, vec, why in misses:
-        print(f"   MISS  {mid}: {name}  vectors={vec}  ({why})")
-    print(f"BENIGN: {benign} | allowed: {benign_ok} | FALSE POSITIVES: {len(fps)}")
-    for fid, name, layers in fps:
-        print(f"   FP    {fid}: {name}  flagged-by={layers}")
-    print(f"\nSUMMARY  attacks-missed={len(misses)}  benign-FP={len(fps)}")
-    sys.exit(0 if (not misses and not fps) else 1)
+    return attacks, caught, misses, benign, benign_ok, fps
+
+
+def main():
+    # No arg -> run ALL batteries (redteam_scenarios*.json, default + real-world).
+    # An explicit path runs just that fixture.
+    if len(sys.argv) > 1:
+        batteries = [Path(sys.argv[1]).resolve()]
+    else:
+        batteries = sorted((ROOT / "tests" / "fixtures").glob("redteam_scenarios*.json"))
+    batteries = [b for b in batteries if b.exists()]
+    if not batteries:
+        print("No redteam scenario fixtures found yet.")
+        return 0
+    _hermetic_env()
+
+    tot_miss, tot_fp = 0, 0
+    for scen in batteries:
+        attacks, caught, misses, benign, benign_ok, fps = run_battery(scen)
+        print(f"battery: {scen.name}")
+        print(f"  ATTACKS: {attacks} | caught: {caught} | MISSED: {len(misses)}")
+        for mid, name, vec, why in misses:
+            print(f"     MISS  {mid}: {name}  vectors={vec}  ({why})")
+        print(f"  BENIGN: {benign} | allowed: {benign_ok} | FALSE POSITIVES: {len(fps)}")
+        for fid, name, layers in fps:
+            print(f"     FP    {fid}: {name}  flagged-by={layers}")
+        tot_miss += len(misses)
+        tot_fp += len(fps)
+
+    label = f"{len(batteries)} batteries" if len(batteries) > 1 else batteries[0].name
+    print(f"\nSUMMARY ({label})  attacks-missed={tot_miss}  benign-FP={tot_fp}")
+    sys.exit(0 if (not tot_miss and not tot_fp) else 1)
 
 
 if __name__ == "__main__":
