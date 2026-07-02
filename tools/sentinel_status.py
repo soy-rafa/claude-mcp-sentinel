@@ -116,6 +116,7 @@ def build_report():
         ("SENTINEL_AI_MODEL", "model for the AI layer"),
         ("SENTINEL_AI_BUDGET", "daily token budget for the AI layer"),
         ("SENTINEL_INTEGRITY_ENFORCE", "on = hard-block commands that tamper with Sentinel's own config"),
+        ("SENTINEL_EXPLAIN", "static (default, zero-token why) | off (leanest) | ai (reuse AI reason)"),
         ("SENTINEL_LANG", "es | en (default: auto-detect)"),
         ("SENTINEL_ALLOWLIST_PATH", "override the allowlist location"),
     ):

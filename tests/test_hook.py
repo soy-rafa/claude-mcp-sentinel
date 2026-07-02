@@ -572,6 +572,21 @@ def main():
                          dr1["decision"] == "warn" and "degrad" in dr1["reason"].lower()
                          and dr2["decision"] == "allow"))
 
+    # ---- EXPLANATION POLICY (static/zero-token by default, off-able) --------
+    os.environ.pop("SENTINEL_EXPLAIN", None)  # default = static
+    ex_def = run_hook({"tool_name": "Read", "tool_input": {"file_path": "~/.ssh/id_rsa"},
+                       "session_id": "exp"}, allowlist_path=empty_allow, feed_path=empty_feed)
+    os.environ["SENTINEL_EXPLAIN"] = "off"
+    try:
+        ex_off = run_hook({"tool_name": "Read", "tool_input": {"file_path": "~/.ssh/id_rsa"},
+                           "session_id": "exp"}, allowlist_path=empty_allow, feed_path=empty_feed)
+    finally:
+        os.environ.pop("SENTINEL_EXPLAIN", None)
+    _has_why = lambda r: ("why" in r["reason"].lower() or "por qué" in r["reason"].lower())
+    results.append(check("explain: static (default) appends zero-token why; SENTINEL_EXPLAIN=off suppresses it",
+                         ex_def["decision"] == "ask" and _has_why(ex_def)
+                         and ex_off["decision"] == "ask" and not _has_why(ex_off)))
+
     # ---- ATTACK-CHAIN / TRAJECTORY (#15) ------------------------------------
     results.append(check("attack-chain: cred access then egress -> exfiltration chain",
                          "exfiltration chain" in (pf.detect_attack_chain(

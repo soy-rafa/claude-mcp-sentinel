@@ -780,6 +780,53 @@ def render(key, lang, **kw):
     return variants.get(lang, variants["en"]).format(**kw)
 
 
+# Plain-language, ZERO-TOKEN "why" per category. Static text — no model call, ever.
+_WHY = {
+    "sensitive_path": {"en": "Reads a credential/secret file — a common first step in data theft.",
+                       "es": "Lee un fichero de credenciales/secretos, primer paso habitual de un robo de datos."},
+    "sensitive_env": {"en": "Sends an environment secret to the network (exfiltration).",
+                      "es": "Manda un secreto del entorno a la red (exfiltración)."},
+    "cloud_metadata": {"en": "Touches the cloud metadata endpoint — used to steal instance credentials.",
+                       "es": "Toca el endpoint de metadata cloud, usado para robar credenciales de la instancia."},
+    "config_write": {"en": "Writes a persistence/agent-config file — can hijack or persist.",
+                     "es": "Escribe un fichero de persistencia/config del agente, puede secuestrar o persistir."},
+    "config_tamper": {"en": "A shell command is modifying Sentinel's own config — it may be disabling protection.",
+                      "es": "Un comando de shell modifica la config del propio Sentinel, podría desactivar la protección."},
+    "suspicious_network": {"en": "Contacts an exfiltration-style destination (pastebin/raw IP/abuse TLD).",
+                           "es": "Contacta un destino tipo exfiltración (pastebin/IP cruda/TLD de abuso)."},
+    "dangerous_command": {"en": "Runs a shell pattern used for RCE, reverse shells or persistence.",
+                          "es": "Ejecuta un patrón de shell usado para RCE, reverse shell o persistencia."},
+    "known_malicious": {"en": "Destination is on the curated list of confirmed-malicious infrastructure.",
+                        "es": "El destino está en la lista curada de infraestructura confirmada maliciosa."},
+    "feed_blocklist": {"en": "Destination is on the auto-updated URLhaus malware feed.",
+                       "es": "El destino está en el feed de malware URLhaus autoactualizado."},
+}
+
+
+def _explain_mode():
+    """How much explanation to attach. 'static' (default) = a canned, ZERO-TOKEN
+    'why' line; 'off' = nothing extra (leanest context footprint, for token-lean
+    users); 'ai' = reuse the AI verdict's reason when present. No mode spends tokens
+    on its own — 'ai' only reuses a verdict already produced by the opt-in AI layer."""
+    m = os.environ.get("SENTINEL_EXPLAIN", "static").strip().lower()
+    return m if m in ("static", "off", "ai") else "static"
+
+
+def _apply_explain(message, category, lang, reason):
+    """Append the plain-language 'why' per SENTINEL_EXPLAIN. Never calls a model."""
+    mode = _explain_mode()
+    if mode == "off":
+        return message
+    if mode == "ai" and reason and "AI(" in reason:
+        return message  # the AI's own reason is already inside {reason}
+    why = _WHY.get(category, {})
+    line = why.get(lang, why.get("en", ""))
+    if not line:
+        return message
+    label = "Por qué" if lang == "es" else "Why"
+    return f"{message}\n{label}: {line}"
+
+
 def _state_path(session_id):
     """Per-session state file. SENTINEL_STATE_DIR overrides the location (tests)."""
     sid = re.sub(r"[^A-Za-z0-9_-]", "", str(session_id or "default"))[:64] or "default"
@@ -979,7 +1026,7 @@ def main():
             key = "deny_tamper"
         else:
             key = "deny_known"
-        message = render(key, lang, tool=tool_name, reason=reason)
+        message = _apply_explain(render(key, lang, tool=tool_name, reason=reason), category, lang, reason)
         print(json.dumps({
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
@@ -990,7 +1037,8 @@ def main():
     elif decision == "ask":
         rememberable = category in AUTO_REMEMBER_CATEGORIES and entity
         key = "ask_remember" if rememberable else "ask_generic"
-        message = render(key, lang, tool=tool_name, reason=reason, entity=entity)
+        message = _apply_explain(render(key, lang, tool=tool_name, reason=reason, entity=entity),
+                                 category, lang, reason)
         print(json.dumps({
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
@@ -999,7 +1047,7 @@ def main():
             },
         }))
     else:  # warn
-        message = render("warn", lang, tool=tool_name, reason=reason)
+        message = _apply_explain(render("warn", lang, tool=tool_name, reason=reason), category, lang, reason)
         print(json.dumps({
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
