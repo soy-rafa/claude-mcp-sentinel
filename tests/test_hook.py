@@ -611,6 +611,32 @@ def main():
     results.append(check("status: reflects shadow mode when SENTINEL_SHADOW=on",
                          "SHADOW" in rep_shadow))
 
+    # ---- CROSS-PLATFORM INSTALLER (U3) --------------------------------------
+    ih_spec = importlib.util.spec_from_file_location("install_hooks", HOOKS / "install_hooks.py")
+    ih = importlib.util.module_from_spec(ih_spec)
+    ih_spec.loader.exec_module(ih)
+    sp_ih = Path(tmpdir) / "ih-settings.json"
+    sp_ih.write_text(json.dumps({"hooks": {"PreToolUse": [
+        {"matcher": "", "hooks": [{"type": "command", "command": "node gitnexus-hook.js"}]}]}}))
+
+    def _count(dd, event, fn):
+        return sum(1 for e in dd.get("hooks", {}).get(event, [])
+                   for h in e.get("hooks", []) if fn in (h.get("command") or ""))
+
+    d1 = ih.install(sp_ih, interp="python3")
+    sp_ih.write_text(json.dumps(d1))
+    d2 = ih.install(sp_ih, interp="python3")  # idempotent re-run
+    foreign_kept = any("gitnexus" in (h.get("command") or "")
+                       for e in d2["hooks"]["PreToolUse"] for h in e.get("hooks", []))
+    du = ih.install(sp_ih, interp="python3", uninstall=True)
+    results.append(check("installer(py): 3 hooks registered, idempotent, keeps foreign hook, uninstall clears",
+                         _count(d1, "PreToolUse", "sentinel_preflight.py") == 1
+                         and _count(d1, "PostToolUse", "sentinel_postflight.py") == 1
+                         and _count(d1, "SessionStart", "config_scan.py") == 1
+                         and _count(d2, "PreToolUse", "sentinel_preflight.py") == 1  # not doubled
+                         and foreign_kept
+                         and _count(du, "PreToolUse", "sentinel_preflight.py") == 0))
+
     # ---- QUARANTINE / FORENSIC HOLD -----------------------------------------
     q_spec = importlib.util.spec_from_file_location("sentinel_quarantine", HOOKS / "sentinel_quarantine.py")
     q = importlib.util.module_from_spec(q_spec)
