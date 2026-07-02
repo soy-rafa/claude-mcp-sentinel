@@ -246,6 +246,20 @@ def main():
       {"tool_name": "Bash", "tool_input": {"command": "jq '.model' ~/.claude/settings.json > /tmp/model.txt"}},
       "allow")
 
+    # ---- INTEGRITY ENFORCE (opt-in hard block of self-tamper, P3) -----------
+    os.environ["SENTINEL_INTEGRITY_ENFORCE"] = "on"
+    try:
+        enf1 = run_hook({"tool_name": "Bash", "tool_input": {"command": "echo '{}' > ~/.claude/settings.json"}},
+                        allowlist_path=empty_allow, feed_path=empty_feed)
+        enf2 = run_hook({"tool_name": "Read", "tool_input": {"file_path": "~/.ssh/id_rsa"}},
+                        allowlist_path=empty_allow, feed_path=empty_feed)
+    finally:
+        os.environ.pop("SENTINEL_INTEGRITY_ENFORCE", None)
+    results.append(check("enforce: self-tamper command HARD-denied when SENTINEL_INTEGRITY_ENFORCE=on",
+                         enf1["decision"] == "deny"))
+    results.append(check("enforce: unrelated sensitive-path read still only asks (not over-blocked)",
+                         enf2["decision"] == "ask"))
+
     # ---- WINDOWS-NATIVE credential paths (P6) -------------------------------
     E("Windows: read %USERPROFILE% .aws credentials",
       {"tool_name": "Bash", "tool_input": {"command": "type %USERPROFILE%\\.aws\\credentials"}},

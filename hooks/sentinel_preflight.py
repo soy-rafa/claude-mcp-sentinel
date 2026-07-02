@@ -408,7 +408,7 @@ def check_config_write(tool_name, tool_input, iocs, allowlist):
         if _CONFIG_TAMPER_RX.search(c):
             return ("shell command modifies an agent-config/hook file "
                     "(settings.json/.mcp.json/.claude) — possible protection tamper",
-                    "high", "config_write", None)
+                    "high", "config_tamper", None)
     return (None, None, None, None)
 
 
@@ -583,6 +583,15 @@ def decide(payload):
         if f["category"] in HARD_DENY_CATEGORIES:
             return "deny", f"[{f['severity'].upper()}] {f['reason']}", f["category"], f["entity"]
 
+    # Opt-in integrity enforcement (SENTINEL_INTEGRITY_ENFORCE): a command that
+    # tampers with Sentinel's own config/hooks becomes a HARD deny instead of an
+    # ask. Off by default (fail-open contract unchanged); only the self-tamper
+    # category is affected, never ordinary config edits or other findings.
+    if _integrity_enforce():
+        for f in findings:
+            if f["category"] == "config_tamper":
+                return "deny", f"[{f['severity'].upper()}] {f['reason']}", f["category"], f["entity"]
+
     top = max(findings, key=lambda f: severity_rank[f["severity"]])
     reason = f"[{top['severity'].upper()}] {top['reason']}"
     if top["severity"] in ("critical", "high"):
@@ -599,6 +608,12 @@ HARD_DENY_CATEGORIES = ("known_malicious", "feed_blocklist")
 # path or domain). Only these are eligible for "remember on approve" by the
 # PostToolUse hook. Command/env findings and confirmed-malicious are excluded.
 AUTO_REMEMBER_CATEGORIES = ("sensitive_path", "suspicious_network")
+
+
+def _integrity_enforce():
+    """Opt-in hard-block for tampering with Sentinel's own config/hooks. Off by
+    default so the fail-open contract is unchanged unless the user asks for it."""
+    return os.environ.get("SENTINEL_INTEGRITY_ENFORCE", "").strip().lower() in ("1", "on", "true", "yes")
 
 
 def _shadow_enabled():
@@ -739,6 +754,14 @@ _MSG = {
                "audit-only mode (SENTINEL_SHADOW) is on, so it is allowed.\nReason: {reason}"),
         "es": ("🛡️ MCP Sentinel [SOMBRA]: esta llamada de {tool} normalmente sería {decision}, pero el "
                "modo solo-auditoría (SENTINEL_SHADOW) está activo, así que se permite.\nMotivo: {reason}"),
+    },
+    "deny_tamper": {
+        "en": ("🛡️ MCP Sentinel BLOCKED a {tool} call that would modify Sentinel's own "
+               "config/hooks.\nReason: {reason}\nIntegrity enforcement (SENTINEL_INTEGRITY_ENFORCE) "
+               "is on, so tampering with the protection itself is denied outright."),
+        "es": ("🛡️ MCP Sentinel ha BLOQUEADO una llamada de {tool} que modificaría la propia "
+               "config/hooks de Sentinel.\nMotivo: {reason}\nEl refuerzo de integridad "
+               "(SENTINEL_INTEGRITY_ENFORCE) está activo, así que manipular la protección se deniega."),
     },
     "degraded": {
         "en": ("⚠️ MCP Sentinel is running WITHOUT its signature base (iocs.b64/iocs.json not found). "
@@ -950,7 +973,12 @@ def main():
     tool_name = payload.get("tool_name") or payload.get("tool", "<unknown>")
     lang = detect_language(payload)
     if decision == "deny":
-        key = "deny_feed" if category == "feed_blocklist" else "deny_known"
+        if category == "feed_blocklist":
+            key = "deny_feed"
+        elif category == "config_tamper":
+            key = "deny_tamper"
+        else:
+            key = "deny_known"
         message = render(key, lang, tool=tool_name, reason=reason)
         print(json.dumps({
             "hookSpecificOutput": {

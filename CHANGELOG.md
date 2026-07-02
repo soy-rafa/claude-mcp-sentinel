@@ -32,12 +32,15 @@ Segunda tanda (esfuerzo M) cerrada también:
   con variables de entorno Windows (`%USERPROFILE%`/`%APPDATA%`…) hacia claves/creds.
 - **U3 — instalador multiplataforma:** `hooks/install_hooks.py` (solo stdlib, sin bash/jq),
   idempotente, preserva hooks ajenos, `--uninstall`. Cubre Windows nativo.
-- **P3 — alarma de auto-tamper prominente:** el escaneo de SessionStart y el informe
-  destacan "PROTECCIÓN POSIBLEMENTE DESACTIVADA" si el propio hook de Sentinel
-  desaparece/cambia (se apoya en P1). La detección en tiempo real del intento la da P2;
-  el modo bloqueante (cambiar el contrato fail-open) queda como decisión abierta de Rafa.
+- **P3 — alarma de auto-tamper + refuerzo opt-in:** el escaneo de SessionStart y el
+  informe destacan "PROTECCIÓN POSIBLEMENTE DESACTIVADA" si el propio hook de Sentinel
+  desaparece/cambia (se apoya en P1). La detección en tiempo real del intento la da P2.
+  Nuevo `SENTINEL_INTEGRITY_ENFORCE` (apagado por defecto): cuando se activa, un comando
+  que manipula la config/hooks del propio Sentinel pasa de `ask` a **deny duro**; solo
+  afecta a esa categoría (`config_tamper`), no a ediciones de config normales ni a otros
+  hallazgos, así que el contrato fail-open por defecto no cambia.
 
-Suite 106/106, precisión FP=0/91, red-team 69/0/0.
+Suite 108/108, precisión FP=0/91, red-team 69/0/0.
 
 ## [3.1.0] - 2026-06-29 — endurecimiento red-team
 

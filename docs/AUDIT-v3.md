@@ -140,13 +140,15 @@ Los 4 quick wins están cerrados. Segunda tanda (M) también cerrada:
 - **U1 [HECHO]** comando `tools/sentinel_status.py`.
 - **P6 [HECHO]** paridad de credenciales Windows en `iocs.json`.
 - **U3 [HECHO]** instalador multiplataforma `hooks/install_hooks.py`.
-- **P3 [PARCIAL]** alarma prominente de auto-tamper en SessionStart + informe (se apoya en
-  P1; detección en tiempo real del intento vía P2). El modo BLOQUEANTE (romper el contrato
-  fail-open y, potencialmente, impedir el arranque de sesión) queda como **decisión abierta
-  de Rafa**, no se toma unilateralmente por riesgo de bloqueo por falso drift.
+- **P3 [HECHO]** alarma prominente de auto-tamper en SessionStart + informe (se apoya en
+  P1; detección en tiempo real del intento vía P2), MÁS refuerzo opt-in
+  `SENTINEL_INTEGRITY_ENFORCE` (off por defecto): con él, manipular la config/hooks del
+  propio Sentinel pasa de `ask` a deny duro, sin cambiar el fail-open por defecto ni
+  bloquear el arranque de sesión. Se descarta el bloqueo automático de arranque por riesgo
+  de lockout ante falso drift; el usuario que lo quiera lo activa con la variable.
 
-Estado: suite 106/106, precisión FP=0/91, red-team 69/0/0. Todos los hallazgos de la
-auditoría abordados salvo la decisión de política de P3 (bloquear vs avisar).
+Estado: **todos los hallazgos de la auditoría abordados.** Suite 108/108, precisión
+FP=0/91, red-team 69/0/0.
 
 ## Nota de método
 Cada hallazgo se apoya en código leído en esta pasada. P2 se marca "a confirmar" porque
