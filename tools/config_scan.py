@@ -283,9 +283,36 @@ def scan_injection(text):
     return hits
 
 
+def collect_capabilities():
+    """Capability-EXPANDING settings that grant the agent new powers. Tracked in the
+    integrity baseline so a NEW capability (a broad permission grant, MCP auto-enable,
+    an auto-approve mode, a new MCP server) is flagged even when no hook/MCP COMMAND
+    changed. This is 'unknown = suspicious' applied to capabilities, the durable
+    answer to new models/clients quietly gaining new powers."""
+    caps = {}
+    for f in settings_files():
+        data = _read_json(f) if f.exists() else None
+        if not isinstance(data, dict):
+            continue
+        if str(data.get("enableAllProjectMcpServers")).strip().lower() == "true":
+            caps["enableAllProjectMcpServers=true"] = "1"
+        perms = data.get("permissions")
+        if isinstance(perms, dict):
+            mode = perms.get("defaultMode")
+            if isinstance(mode, str) and mode.strip().lower() in ("acceptedits", "bypasspermissions"):
+                caps[f"permission-defaultMode={mode}"] = "1"
+            for entry in perms.get("allow", []) or []:
+                if isinstance(entry, str) and entry:
+                    caps[f"permission-allow:{entry}"] = "1"
+    for _src, name, _cmd in collect_mcp():
+        caps[f"mcp-server:{name}"] = "1"
+    return caps
+
+
 def current_state():
     """Security-relevant fingerprint for the integrity baseline."""
-    state = {"hooks": {}, "mcp": {}, "docs": {}}
+    state = {"hooks": {}, "mcp": {}, "docs": {}, "caps": {}}
+    state["caps"] = collect_capabilities()
     for src, event, cmd in collect_hooks():
         state["hooks"][f"{event}:{cmd}"] = _sha(cmd)
     for src, name, cmd in collect_mcp():
@@ -326,7 +353,13 @@ def diff_baseline(state, baseline):
     if _baseline_is_stale(baseline):
         return ["BASELINE STALE: hash format upgraded to full SHA-256. "
                 "Re-run `config_scan.py --baseline` to re-establish trust."]
-    for section, label in (("hooks", "hook"), ("mcp", "MCP server"), ("docs", "config file")):
+    sections = [("hooks", "hook"), ("mcp", "MCP server"), ("docs", "config file")]
+    # Only diff capabilities once the baseline actually tracks them, so upgrading
+    # to a caps-aware Sentinel doesn't dump a wall of "NEW capability" on an old
+    # baseline. Re-running --baseline opts in.
+    if "caps" in baseline:
+        sections.append(("caps", "capability"))
+    for section, label in sections:
         cur, old = state.get(section, {}), baseline.get(section, {})
         for k, v in cur.items():
             if k not in old:

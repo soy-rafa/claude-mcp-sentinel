@@ -523,6 +523,18 @@ def main():
                          r_bad["verdict"] in ("HIGH", "CRITICAL")
                          and any(k == "injection" for k, _, _ in r_bad["findings"])
                          and r_ok["verdict"] == "LOW" and not r_ok["findings"]))
+
+    # ---- CAPABILITY-DRIFT WATCHER (C) ---------------------------------------
+    cap_base = {"hooks": {}, "mcp": {}, "docs": {}, "caps": {"mcp-server:foo": "1"}}
+    cap_now = {"hooks": {}, "mcp": {}, "docs": {},
+               "caps": {"mcp-server:foo": "1", "mcp-server:evil": "1",
+                        "permission-allow:Bash(rm -rf)": "1"}}
+    cap_drift = cs.diff_baseline(cap_now, cap_base)
+    old_base_nocaps = {"hooks": {}, "mcp": {}, "docs": {}}  # pre-caps baseline
+    results.append(check("capability-drift: new MCP server + permission grant flagged; old baseline stays quiet",
+                         any("NEW capability" in d and "evil" in d for d in cap_drift)
+                         and any("permission-allow" in d for d in cap_drift)
+                         and not any("capability" in d for d in cs.diff_baseline(cap_now, old_base_nocaps))))
     results.append(check("config-scan: SHA-256 hash is full 64 chars (no collision shortcut)",
                          len(cs._sha("x")) == 64))
     results.append(check("config-scan: stale (16-char) baseline triggers re-baseline, not false drift",
