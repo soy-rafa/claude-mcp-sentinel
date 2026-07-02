@@ -96,6 +96,17 @@ def _sanitize_field(v):
     return s.replace(_FENCE, "").replace("===", "==")
 
 
+def _redact(s):
+    """Redact secrets (tokens, keys) before the field leaves the machine for the
+    API. Reuses the quarantine module's redactor; fail-open to the raw string only
+    if it can't be imported (better a redacted judge than none)."""
+    try:
+        import sentinel_quarantine
+        return sentinel_quarantine.redact(s)
+    except Exception:
+        return s
+
+
 def _field_text(payload):
     """Concatenate the scanned tool fields (the untrusted data) for marker checks."""
     ti = payload.get("tool_input") or payload.get("input") or {}
@@ -120,7 +131,7 @@ def build_prompt(payload, local_reason, category):
         for k in ("command", "file_path", "url"):
             v = ti.get(k)
             if isinstance(v, str) and v:
-                fields[k] = _sanitize_field(v)
+                fields[k] = _redact(_sanitize_field(v))
     data_block = json.dumps(fields)[:400]
     return ("You are MCP Sentinel's verdict function. A LOCAL security pre-filter flagged a Claude "
             "Code tool call as possibly risky. Judge ONLY whether it is genuinely dangerous to the "

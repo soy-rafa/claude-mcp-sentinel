@@ -2,21 +2,27 @@
 name: mcp-sentinel
 version: "3.1.0"
 description: >
-  Security monitoring agent for Claude Skills and MCP servers. v2 adds a real-time protection
-  layer (PreToolUse hook): it hard-blocks confirmed-malicious tool calls (known-bad domains from
-  real incidents) and, for merely suspicious ones (credential exfiltration, reverse shells,
-  curl|bash pipes, raw-IP URLs), asks you to approve or deny at the native prompt instead of
-  blocking outright. Approving a flagged path/domain is remembered (added to your allowlist) so
-  it stops asking — trust builds as you confirm what you use. All with zero LLM cost. v1 static
-  analysis still runs: scans installed skills/MCPs
-  against multiple vulnerability databases (GitHub Advisory DB, vulnerablemcp.info, CVE feeds,
-  mcpscan.ai, Snyk, ClawHub/VirusTotal) and community alerts (Reddit r/ClaudeAI, Discord),
-  maintains a local threat database, performs coherence analysis and update diff detection.
-  Use this skill whenever: the user asks about security of their skills or MCPs, wants to
-  audit installed plugins, enable real-time protection, mentions "vulnerability", "CVE",
-  "malicious skill", "security scan", "threat", "audit", "runtime protection", "block", says
-  "is this skill safe?", asks to check dependencies, or wants ongoing security monitoring.
-  Also trigger proactively when the user is about to install a new skill or MCP server.
+  Security monitoring agent for Claude Skills and MCP servers. Real-time protection layer
+  (PreToolUse hook, zero LLM cost by default): hard-blocks confirmed-malicious tool calls
+  (known-bad domains from real incidents and an auto-updating URLhaus malware feed) and, for
+  merely suspicious ones (credential exfiltration, reverse shells, curl|bash pipes, raw-IP
+  URLs, cloud-metadata/IMDS, config/persistence writes), asks you to approve or deny at the
+  native prompt instead of blocking outright. Approving a flagged path/domain is remembered
+  so it stops asking — trust builds as you confirm what you use. v3 adds: multi-step
+  attack-chain detection (credential access then egress), cross-server data-flow tracking, a
+  config/MCP scanner + integrity baseline (catches a malicious hook planted in a cloned repo),
+  a shadow/audit-only mode (SENTINEL_SHADOW: never blocks, just tallies what it would have
+  stopped), and an OPTIONAL, off-by-default AI escalation layer (SENTINEL_AI: only for
+  ambiguous cases, token-budgeted, hardened against prompt injection). Localized messages
+  (Spanish/English). Threat data ships base64-at-rest so a host antivirus does not flag the
+  install. The v1 static analysis still runs on demand: scans installed skills/MCPs against
+  vulnerability databases (GitHub Advisory DB, vulnerablemcp.info, CVE feeds, mcpscan.ai,
+  Snyk, ClawHub/VirusTotal) and community alerts, maintains a local threat database, performs
+  coherence and update-diff analysis. Use this skill whenever: the user asks about security of
+  their skills or MCPs, wants to audit installed plugins, enable real-time protection, mentions
+  "vulnerability", "CVE", "malicious skill", "security scan", "threat", "audit", "runtime
+  protection", "block", says "is this skill safe?", asks to check dependencies, or wants ongoing
+  security monitoring. Also trigger proactively when the user is about to install a new skill or MCP server.
 ---
 
 # MCP Sentinel — Security Monitor for Skills & MCP Servers

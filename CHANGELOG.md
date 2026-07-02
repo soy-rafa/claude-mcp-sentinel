@@ -3,6 +3,27 @@
 All notable changes to MCP Sentinel are recorded here. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/). Versioning is [semver](https://semver.org/).
 
+## [Unreleased] — quick wins de la auditoría (endurecimiento)
+
+Auditoría v3.1.0 (`docs/AUDIT-v3.md`, lente usabilidad + protección). Cerrados los
+4 quick wins de mayor palanca:
+- **Auto-protección (P1):** el watcher de integridad ahora detecta que ELIMINEN un
+  hook (antes solo veía nuevos/cambiados). Borrar el hook de Sentinel de
+  `settings.json` para desactivarlo se marca, y si el hook borrado es el del propio
+  Sentinel se avisa como "protección posiblemente desactivada".
+- **Fail-open ruidoso (P4):** si la base de firmas (`iocs.b64`/`iocs.json`) no está
+  (p.ej. un antivirus la puso en cuarentena), Sentinel avisa una vez por sesión de
+  que la protección está degradada en vez de permitir todo en silencio.
+- **Privacidad en la capa de IA (P5):** los campos del tool se REDACTAN (reutilizando
+  el redactor de cuarentena) antes de mandarlos a la API, para que un token o una
+  clave en un comando no salga de la máquina.
+- **Usabilidad (U2):** la descripción de `SKILL.md` ya describe la v3 (modelo ask, IA
+  opcional, modo sombra, attack-chain, dataflow, integridad, AV-safe), no la v2.
+
+Pendiente de la auditoría (siguiente tanda): comando `sentinel status` (U1), cerrar
+auto-desactivación por shell (P2), integridad periódica/bloqueante (P3), instalador
+multiplataforma (U3). Suite 93/93, precisión FP=0/91, red-team 69/0/0.
+
 ## [3.1.0] - 2026-06-29 — endurecimiento red-team
 
 > Noche autónoma de red-team (equipo rojo): una batería de "skills maliciosas"

@@ -84,6 +84,22 @@ def load_iocs():
     return {}
 
 
+def _iocs_present():
+    """Cheap existence check for the bundled IOC library (no parse). Used to warn
+    when Sentinel is running WITHOUT its signature base (e.g. an antivirus
+    quarantined iocs.b64) — in that state detection degrades to allow-all, which
+    must not be silent."""
+    override = os.environ.get("SENTINEL_IOCS_PATH")
+    if override:
+        return Path(override).exists()
+    for base in (Path(__file__).parent.parent / "references",
+                 Path.home() / ".claude" / "skills" / "mcp-sentinel" / "references",
+                 Path.cwd() / ".claude" / "skills" / "mcp-sentinel" / "references"):
+        if (base / "iocs.b64").exists() or (base / "iocs.json").exists():
+            return True
+    return False
+
+
 def load_feed_domains():
     """Load the auto-updated blocklist feed as a set of exact hostnames.
 
@@ -704,6 +720,14 @@ _MSG = {
         "es": ("🛡️ MCP Sentinel [SOMBRA]: esta llamada de {tool} normalmente sería {decision}, pero el "
                "modo solo-auditoría (SENTINEL_SHADOW) está activo, así que se permite.\nMotivo: {reason}"),
     },
+    "degraded": {
+        "en": ("⚠️ MCP Sentinel is running WITHOUT its signature base (iocs.b64/iocs.json not found). "
+               "Protection is degraded — calls are being allowed unchecked. Reinstall the skill or "
+               "restore the file (an antivirus may have quarantined it)."),
+        "es": ("⚠️ MCP Sentinel está funcionando SIN su base de firmas (no encuentra iocs.b64/iocs.json). "
+               "La protección está degradada: las llamadas se permiten sin revisar. Reinstala la skill o "
+               "restaura el fichero (puede que un antivirus lo haya puesto en cuarentena)."),
+    },
 }
 
 
@@ -801,6 +825,22 @@ def record_event(payload, decision, category, ai_tokens=0, would_block=False):
         pass
 
 
+def _warn_degraded_once(payload):
+    """Return True at most once per session, so the degraded-protection warning
+    is shown a single time instead of on every call. Uses a marker in the state
+    dir. Fail-open (any error → don't warn, don't crash)."""
+    try:
+        sid = payload.get("session_id") or payload.get("sessionId") or "default"
+        marker = _state_path(sid).with_suffix(".degraded")
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        if marker.exists():
+            return False
+        marker.write_text("1")
+        return True
+    except Exception:
+        return False
+
+
 def _read_stdin_payload():
     """Read and parse the tool-call payload from stdin, tolerant of a BOM.
 
@@ -849,6 +889,19 @@ def main():
             pass
 
     if decision == "allow":
+        # Degraded-protection alarm: if the signature base is missing, an "allow"
+        # is allow-BY-DEFAULT (no signatures to match), not a vetted allow. Say so
+        # once per session instead of failing open silently.
+        if not _iocs_present() and _warn_degraded_once(payload):
+            lang = detect_language(payload)
+            print(json.dumps({
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "allow",
+                    "additionalContext": render("degraded", lang),
+                },
+            }))
+            return
         # Silent allow: no stdout means the call proceeds normally without
         # adding any message to the conversation context.
         return

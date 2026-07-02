@@ -452,6 +452,8 @@ def main():
                          and cs.BASELINE_PATH.read_text().startswith("#MCP-SENTINEL-B64")))
     results.append(check("config-scan: integrity drift detects a new hook",
                          any("NEW hook" in d for d in cs.diff_baseline(s2, s1))))
+    results.append(check("config-scan: integrity drift detects a REMOVED hook (self-disable attempt)",
+                         any("REMOVED hook" in d for d in cs.diff_baseline(s1, s2))))
     results.append(check("config-scan: SHA-256 hash is full 64 chars (no collision shortcut)",
                          len(cs._sha("x")) == 64))
     results.append(check("config-scan: stale (16-char) baseline triggers re-baseline, not false drift",
@@ -501,6 +503,24 @@ def main():
                          and r_deny["decision"] == "warn" and _shadow_note(r_deny)))
     results.append(check("shadow: would_block tally counts both would-be blocks",
                          sh_stats.get("totals", {}).get("would_block") == 2))
+
+    # ---- DEGRADED PROTECTION ALARM (signature base missing) -----------------
+    # If iocs.b64/iocs.json can't be found (e.g. antivirus quarantined it), an
+    # allow is allow-by-default, not vetted. Sentinel must say so once per session
+    # instead of failing open silently.
+    os.environ["SENTINEL_IOCS_PATH"] = str(Path(tmpdir) / "nope-iocs.b64")  # does not exist
+    os.environ["SENTINEL_STATE_DIR"] = str(Path(tmpdir) / "degraded-state")
+    try:
+        dr1 = run_hook({"tool_name": "Read", "tool_input": {"file_path": "/home/me/x.txt"},
+                        "session_id": "degr"}, allowlist_path=empty_allow, feed_path=empty_feed)
+        dr2 = run_hook({"tool_name": "Read", "tool_input": {"file_path": "/home/me/y.txt"},
+                        "session_id": "degr"}, allowlist_path=empty_allow, feed_path=empty_feed)
+    finally:
+        os.environ.pop("SENTINEL_IOCS_PATH", None)
+        os.environ.pop("SENTINEL_STATE_DIR", None)
+    results.append(check("degraded: warns once when signature base is missing, silent after",
+                         dr1["decision"] == "warn" and "degrad" in dr1["reason"].lower()
+                         and dr2["decision"] == "allow"))
 
     # ---- ATTACK-CHAIN / TRAJECTORY (#15) ------------------------------------
     results.append(check("attack-chain: cred access then egress -> exfiltration chain",
@@ -642,6 +662,11 @@ def main():
                          bool(v_inj) and v_inj["decision"] == "ask"))
     results.append(check("ai-hardening: clean payload still allowed when AI says allow",
                          bool(v_clean) and v_clean["decision"] == "allow"))
+    _tok = "ghp_" + ("a" * 36)
+    _p_red = ai.build_prompt({"tool_name": "Bash", "tool_input": {"command": "echo " + _tok}},
+                             "[HIGH] x", "dangerous_command")
+    results.append(check("ai-hardening: secrets in tool fields are redacted before leaving the machine",
+                         _tok not in _p_red and "REDACT" in _p_red.upper()))
 
     # ---- MCP SERVER-SPEC SCANNER (anti line-jumping, #10) --------------------
     results.append(check("mcp-scan: dangerous command in server spec flagged",

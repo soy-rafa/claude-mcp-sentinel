@@ -130,10 +130,14 @@ media página en README + enlace desde el mensaje del hook.
 | P6 | Patrones nativos Windows | Protección | Bajo | M |
 
 ## Quick wins (alto valor, esfuerzo S) — orden sugerido
-1. **P1** detectar eliminación en `diff_baseline` (+ regresión). El hueco más serio, arreglo pequeño.
-2. **P4** fail-open ruidoso cuando faltan firmas.
-3. **P5** redactar en `sentinel_ai.build_prompt` (reutiliza `redact()`).
-4. **U2** descripción de SKILL.md a v3.
+1. **P1** detectar eliminación en `diff_baseline` (+ regresión). El hueco más serio, arreglo pequeño. **[HECHO 2026-07-02]**
+2. **P4** fail-open ruidoso cuando faltan firmas. **[HECHO 2026-07-02]**
+3. **P5** redactar en `sentinel_ai.build_prompt` (reutiliza `redact()`). **[HECHO 2026-07-02]**
+4. **U2** descripción de SKILL.md a v3. **[HECHO 2026-07-02]**
+
+Los 4 quick wins están cerrados (suite 93/93, precisión FP=0/91, red-team 69/0/0).
+Pendiente: U1 (comando de estado), P2 (auto-desactivación por shell), P3 (integridad
+periódica/bloqueante), U3 (instalador multiplataforma), P6 (patrones Windows).
 
 ## Nota de método
 Cada hallazgo se apoya en código leído en esta pasada. P2 se marca "a confirmar" porque

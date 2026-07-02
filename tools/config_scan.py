@@ -333,6 +333,15 @@ def diff_baseline(state, baseline):
                 drift.append(f"NEW {label}: {k}")
             elif old[k] != v:
                 drift.append(f"CHANGED {label}: {k}")
+        # A REMOVED entry matters as much as a new one: deleting Sentinel's own
+        # hook from settings.json is the obvious way to disable protection, and
+        # a NEW/CHANGED-only diff would miss it entirely.
+        for k in old:
+            if k not in cur:
+                if "sentinel" in k.lower():
+                    drift.append(f"REMOVED {label} — SENTINEL PROTECTION MAY BE DISABLED: {k}")
+                else:
+                    drift.append(f"REMOVED {label}: {k}")
     return drift
 
 
