@@ -24,6 +24,8 @@ hook y capturando su respuesta. Nada se ejecuta; solo se muestra el veredicto.
   bash docs/demos/demo.sh            # ritmo normal
   DEMO_PACE=2 bash docs/demos/demo.sh   # más lento para grabar
   ```
+- **`sentinel-demo.gif`** — animación lista para pegar en un post/reel (~25s, 2.7 MB,
+  colores, salida real). Generada con `cast2gif.py` (Pillow + fuente Menlo).
 - **`sentinel-demo.cast`** — animación en formato [asciinema](https://asciinema.org)
   (~26s). Reprodúcela, súbela o conviértela a GIF:
   ```
