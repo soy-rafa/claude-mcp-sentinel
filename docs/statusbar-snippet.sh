@@ -1,4 +1,4 @@
-# MCP Sentinel — statusline segment (reference copy).
+# MCP Sentinel: statusline segment (reference copy).
 #
 # The live statusline is ~/.claude/custom_bar.sh (OUTSIDE this repo). This file
 # is the versioned copy of the Sentinel segment so the integration is
@@ -10,7 +10,7 @@
 #
 # Renders, after the SNTL:ON/OFF chip:
 #   ⚑N   threats flagged today (deny+ask+warn), yellow
-#   AI:Nk AI-escalation tokens spent (totals), cyan — only when > 0
+#   AI:Nk AI-escalation tokens spent (totals), cyan: only when > 0
 #
 # To (re)install: paste the block below right after the SNTL=... if/else in
 # custom_bar.sh, and append `$sntl_extra` to the final echo:

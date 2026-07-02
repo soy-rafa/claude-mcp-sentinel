@@ -4,7 +4,7 @@
   "scan_count": 0,
   "inventory": [
     {
-      "_comment": "Template — remove this entry. Each installed skill/MCP gets one of these.",
+      "_comment": "Template: remove this entry. Each installed skill/MCP gets one of these.",
       "name": "example-skill",
       "type": "skill|mcp_server",
       "source": "github.com/user/example-skill",

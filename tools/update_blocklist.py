@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MCP Sentinel — blocklist feed updater.
+MCP Sentinel: blocklist feed updater.
 
 Downloads a machine-readable feed of currently-active malware hosts and writes
 a deduped, one-domain-per-line file that the PreToolUse hook loads for exact
@@ -15,7 +15,7 @@ No account or Auth-Key is required for this endpoint.
 Why exact-host matching (vs the curated substring list in iocs.json): a feed has
 hundreds of entries. Substring-matching each against every tool call would be
 slow and false-positive-prone ("a.com" matching "data.com"). The hook instead
-extracts hostnames from a call and tests exact set membership — O(1), precise.
+extracts hostnames from a call and tests exact set membership: O(1), precise.
 
 Usage:
   python3 tools/update_blocklist.py                 # fetch default feed -> default output
@@ -136,8 +136,8 @@ def _existing_count(output):
 
 
 def passes_sanity(new_count, prev_count):
-    """Refuse a drastic shrink — a feed that suddenly loses >50% of its domains
-    is likely a truncated download or a poisoned/empty source. Keep the old one."""
+    """Refuse a drastic shrink (a feed that suddenly loses >50% of its domains
+    is likely a truncated download or a poisoned/empty source). Keep the old one."""
     if prev_count > 20 and new_count < prev_count * 0.5:
         return False
     return True
@@ -179,14 +179,14 @@ def main(argv=None):
 
     domains = parse_hostfile(text)
     if not domains:
-        print("❌ Feed parsed to zero domains — refusing to overwrite existing feed.",
+        print("❌ Feed parsed to zero domains: refusing to overwrite existing feed.",
               file=sys.stderr)
         return 1
 
     prev = _existing_count(args.output)
     if not passes_sanity(len(domains), prev):
-        print(f"❌ New feed has {len(domains)} domains vs {prev} existing — drastic "
-              "shrink (truncated/poisoned fetch?). Keeping the existing feed.", file=sys.stderr)
+        print(f"❌ New feed has {len(domains)} domains vs {prev} existing (drastic "
+              "shrink, truncated/poisoned fetch?). Keeping the existing feed.", file=sys.stderr)
         return 1
 
     write_feed(domains, args.output, encode=not args.plain)

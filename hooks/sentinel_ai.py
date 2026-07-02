@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-MCP Sentinel — optional AI escalation layer (v3).
+MCP Sentinel: optional AI escalation layer (v3).
 
 The local engine resolves ~99% of calls with zero tokens. For the AMBIGUOUS ones
 (a heuristic `ask`), and ONLY when explicitly enabled, this module escalates to
-an LLM for a sharper verdict — turning a vague "ask the user" into a confident
+an LLM for a sharper verdict, turning a vague "ask the user" into a confident
 allow / ask / deny with a one-line reason.
 
 Economics & safety (the whole point):
@@ -212,7 +212,7 @@ def escalate(payload, local_reason, category, timeout=3.0):
             return None
         # Deterministic anti-injection backstop, OUTSIDE the model (un-promptable):
         # if the untrusted fields carry prompt-injection markers, the AI is NEVER
-        # allowed to UPGRADE the call to "allow" — cap it at "ask" so a human stays
+        # allowed to UPGRADE the call to "allow", cap it at "ask" so a human stays
         # in the loop. The AI may still sharpen toward "deny". This makes a coerced
         # "allow" inert even if the framing in build_prompt were somehow bypassed.
         if verdict["decision"] == "allow" and _looks_injected(_field_text(payload)):

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-MCP Sentinel — vault: encode/decode threat-data files base64 at rest.
+MCP Sentinel: vault: encode/decode threat-data files base64 at rest.
 
 A security tool ships indicators of compromise (malware domains, reverse-shell
-regexes, injection phrases) — exactly what antivirus signatures look for. Shipped
+regexes, injection phrases): exactly what antivirus signatures look for. Shipped
 as plaintext, they get the package (and the user's machine) falsely flagged. This
 tool wraps such a file in base64 with the `#MCP-SENTINEL-B64` marker; the hook
 decodes it in memory (load_iocs / load_feed_domains understand the marker).

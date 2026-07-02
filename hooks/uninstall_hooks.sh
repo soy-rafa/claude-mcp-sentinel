@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# MCP Sentinel — uninstall runtime protection hooks.
+# MCP Sentinel: uninstall runtime protection hooks.
 #
 # Removes sentinel_preflight.py (PreToolUse) and sentinel_postflight.py
 # (PostToolUse) from Claude Code's settings. Leaves other hooks untouched.
@@ -26,7 +26,7 @@ else
 fi
 
 if [[ ! -f "$SETTINGS_FILE" ]]; then
-  echo "ℹ️  No settings file at $SETTINGS_FILE — nothing to uninstall."
+  echo "ℹ️  No settings file at $SETTINGS_FILE, nothing to uninstall."
   exit 0
 fi
 

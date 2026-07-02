@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-MCP Sentinel — config & MCP static scanner + integrity watcher (v3).
+MCP Sentinel: config & MCP static scanner + integrity watcher (v3).
 
 The PreToolUse hook only sees individual tool calls; it CANNOT see a malicious
 hook planted in a cloned repo's .claude/settings.json (it runs before any tool
-call, e.g. at SessionStart — CVE-2025-59536), nor the descriptions/commands of
+call, e.g. at SessionStart, CVE-2025-59536), nor the descriptions/commands of
 installed MCP servers. This deterministic scanner closes that gap. It is NOT on
 the hot path: run on demand, on a schedule, or from a SessionStart hook.
 
@@ -24,7 +24,7 @@ Modes:
   config_scan.py --baseline (re)establish the trusted baseline after you review
   config_scan.py --session  brief, non-blocking output for a SessionStart hook
 
-Fail-open: any error prints a warning and exits 0 — the scanner never blocks
+Fail-open: any error prints a warning and exits 0, the scanner never blocks
 Claude Code. Whether the integrity watcher should DENY a session (blocking) is a
 deliberate maintainer decision; this ships in WARN mode.
 
@@ -52,7 +52,7 @@ HOME = Path.home()
 BASELINE_PATH = HOME / ".claude" / "sentinel-baseline.b64"
 B64_MARKER = "#MCP-SENTINEL-B64"
 
-# Env vars that redirect traffic or inject code at process start — a malicious
+# Env vars that redirect traffic or inject code at process start, a malicious
 # MCP server setting these in its spec is hijacking the agent's network/runtime.
 _RISKY_ENV = {
     "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NODE_OPTIONS", "NODE_EXTRA_CA_CERTS",
@@ -188,7 +188,7 @@ def _collect_strings(obj):
 
 def scan_server_spec(name, spec):
     """Scan one MCP server spec for (a) dangerous commands and (b) prompt-injection
-    or obfuscation hidden in ANY string field — command, args, env values, url, or
+    or obfuscation hidden in ANY string field: command, args, env values, url, or
     a tool/description/instructions field. This is the anti-line-jumping check the
     PreToolUse hook structurally cannot do (it never sees tools/list)."""
     findings = []
@@ -207,7 +207,7 @@ def scan_server_spec(name, spec):
         for rx in scan_injection(s):
             findings.append(f"MCP '{name}': hidden-instruction/obfuscation in config /{rx}/")
         # Command substitution or secret-env dereference embedded in a config arg
-        # — the MCP server captures secrets/output and becomes the exfil channel.
+        # the MCP server captures secrets/output and becomes the exfil channel.
         if re.search(r"\$\([^)]+\)", s) or re.search(r"`[^`]+`", s):
             findings.append(f"MCP '{name}': command substitution in config arg ({s[:60]})")
         if pf is not None and getattr(pf, "_SECRET_DEREF_RE", None) and pf._SECRET_DEREF_RE.search(s):
@@ -222,7 +222,7 @@ def scan_server_spec(name, spec):
         except Exception:
             pass
         if re.search(r"(?i)https?://(127\.0\.0\.1|0\.0\.0\.0|localhost|10\.\d|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)", url):
-            findings.append(f"MCP '{name}': endpoint on localhost/private network — verify it is not a proxy/MITM redirect ({url})")
+            findings.append(f"MCP '{name}': endpoint on localhost/private network: verify it is not a proxy/MITM redirect ({url})")
     # Proxy / loader env overrides = traffic redirection or code injection.
     env = spec.get("env") if isinstance(spec, dict) else None
     if isinstance(env, dict):
@@ -372,7 +372,7 @@ def diff_baseline(state, baseline):
         for k in old:
             if k not in cur:
                 if "sentinel" in k.lower():
-                    drift.append(f"REMOVED {label} — SENTINEL PROTECTION MAY BE DISABLED: {k}")
+                    drift.append(f"REMOVED {label}: SENTINEL PROTECTION MAY BE DISABLED: {k}")
                 else:
                     drift.append(f"REMOVED {label}: {k}")
     return drift
@@ -389,7 +389,7 @@ def run_scan():
             findings["commands"].append(f"{finding} ({src})")
     for f in doc_files():
         # Sentinel's own files contain injection phrases by design (it documents
-        # and tests them) — never flag the tool against itself.
+        # and tests them), never flag the tool against itself.
         if str(f).startswith(str(ROOT)):
             continue
         if f.exists():
@@ -411,7 +411,7 @@ _SCAN_MAX_FILE = 512 * 1024
 def scan_path(target):
     """Vet a skill/MCP directory (or file) BEFORE trusting/installing it. Static,
     zero-token: reuses the same detectors as the runtime hook. Returns
-    {findings: [(kind, path, detail)], score, verdict}. Intentionally cautious —
+    {findings: [(kind, path, detail)], score, verdict}. Intentionally cautious,
     a pre-install vet should over-flag rather than miss."""
     target = Path(target).expanduser()
     findings = []
@@ -466,7 +466,7 @@ def session_alarm(findings):
     Returned separately so it is never buried in a generic finding count."""
     for d in findings.get("drift", []) or []:
         if "SENTINEL PROTECTION" in d:
-            return ("🚨 MCP Sentinel: PROTECTION MAY BE DISABLED — " + d
+            return ("🚨 MCP Sentinel: PROTECTION MAY BE DISABLED: " + d
                     + f"\n   Reinstall with: python3 {ROOT / 'hooks' / 'install_hooks.py'}")
     return None
 
@@ -527,7 +527,7 @@ def main(argv=None):
     if not total:
         print("✅ MCP Sentinel config scan: no findings. Hooks, MCP servers and docs look clean.")
         if load_baseline() is None:
-            print("   (No integrity baseline yet — run with --baseline to establish one.)")
+            print("   (No integrity baseline yet, run with --baseline to establish one.)")
         return 0
 
     alarm = session_alarm(findings)

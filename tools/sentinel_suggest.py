@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-sentinel suggest — turn repeated asks into one-click trust (the ask-fatigue fix).
+sentinel suggest: turn repeated asks into one-click trust (the ask-fatigue fix).
 
 Sentinel records every path/domain it asked about (only auto-trustable categories;
 never commands or env). This aggregates them across sessions and offers to add the
@@ -97,12 +97,12 @@ def main(argv=None):
             print(f"   + {x}")
         return 0
 
-    print("🛡️ MCP Sentinel — trust suggestions (from repeated asks):")
+    print("🛡️ MCP Sentinel: trust suggestions (from repeated asks):")
     for (cat, ent), n in ranked:
         kind = "path" if cat == "sensitive_path" else "domain"
         print(f"   {n:>3}x  {kind}: {ent}")
     print("\nTrust them (stops the asks) with:  python3 tools/sentinel_suggest.py --apply")
-    print("Review first — only trust what you recognize.")
+    print("Review first, only trust what you recognize.")
     return 0
 
 

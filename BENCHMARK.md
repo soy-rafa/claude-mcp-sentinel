@@ -1,4 +1,4 @@
-# MCP Sentinel — reproducible benchmark
+# MCP Sentinel: reproducible benchmark
 
 Security tools should be judged on evidence, not claims. Everything here you can
 reproduce locally in seconds. All attack data is **inert** (it describes what an
@@ -13,8 +13,8 @@ attack would do, as data; nothing executes) and ships base64-at-rest.
 | Red-team (all batteries) | `python3 tests/redteam_check.py` | **69 attacks, 0 missed, 0 false positives** |
 
 The red-team runner aggregates every `tests/fixtures/redteam_scenarios*.json`:
-- **Battery 1** — 39 adversarially-designed scenarios (single + combined vectors).
-- **Battery 2** — 35 scenarios recreating **real documented incidents**: the Postmark
+- **Battery 1**: 39 adversarially-designed scenarios (single + combined vectors).
+- **Battery 2**: 35 scenarios recreating **real documented incidents**: the Postmark
   MCP backdoor, tool poisoning / "line jumping" (Invariant Labs / Trail of Bits),
   SKILL.md prompt injection, credential exfiltration, persistence & RCE
   (CVE-2025-59536, CVE-2025-66032 bypasses), cross-tool injection + cloud IMDS, and a

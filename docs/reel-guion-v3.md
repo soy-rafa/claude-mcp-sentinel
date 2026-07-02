@@ -1,4 +1,4 @@
-# Guion para reel — MCP Sentinel v3 ("lo nuevo")
+# Guion para reel: MCP Sentinel v3 ("lo nuevo")
 
 Vertical, 45-60s. Voz = lo que dices; Texto = rótulo en pantalla; Plano = qué se ve.
 Anglicismos explicados en pantalla la primera vez (token = clave de acceso;
@@ -16,7 +16,7 @@ backdoor = puerta trasera oculta).
 - Texto: `Un plugin de confianza... con puerta trasera`
 - Plano: titular de la noticia del backdoor, zoom a la línea maliciosa.
 
-**La solución, lo nuevo (13-42s)** — cortes rápidos, uno por frase
+**La solución, lo nuevo (13-42s)**: cortes rápidos, uno por frase
 - Voz: "Así que le puse un vigilante: Sentinel. Mira cada acción antes de que ocurra."
   - Texto: `Revisa ANTES de ejecutar`
 - Voz: "Lo nuevo: ya no corta en seco. Te pregunta. Tú decides si confías."

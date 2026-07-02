@@ -1,4 +1,4 @@
-# Demo 4 — Dominio malicioso confirmado (bloqueo duro)
+# Demo 4: Dominio malicioso confirmado (bloqueo duro)
 
 **Usuario:** La skill del correo (caso real: backdoor de Postmark) manda datos a su servidor.
 
@@ -17,7 +17,7 @@ Es un indicador confirmado como malicioso y no se puede añadir a la lista de pe
 Por qué: El destino está en la lista curada de infraestructura confirmada maliciosa.
 ```
 
-**Resultado:** `deny` — Infraestructura confirmada de un incidente real: bloqueo DURO, no anulable. Aquí Sentinel no pregunta, corta.
+**Resultado:** `deny`: Infraestructura confirmada de un incidente real: bloqueo DURO, no anulable. Aquí Sentinel no pregunta, corta.
 
 ---
 

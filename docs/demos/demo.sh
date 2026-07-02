@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# MCP Sentinel — live demo. Run it and screen-record for a reel/clip.
+# MCP Sentinel: live demo. Run it and screen-record for a reel/clip.
 # It feeds REAL payloads to the live hook and shows Sentinel's real output.
 # Nothing is executed; only the hook's verdict is displayed.
 set -u
@@ -24,7 +24,7 @@ verdict(){
 }
 
 clear 2>/dev/null || true
-printf "\033[1;35m🛡  MCP Sentinel — demo en vivo\033[0m  \033[2m(salida real del hook)\033[0m\n"
+printf "\033[1;35m🛡  MCP Sentinel: demo en vivo\033[0m  \033[2m(salida real del hook)\033[0m\n"
 
 echo '{"tool_name":"Read","tool_input":{"file_path":"/Users/me/proyecto/package.json"}}' > "$d/1"
 say "Lee el package.json del proyecto."; tool "Read package.json"; verdict "$d/1"

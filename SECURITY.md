@@ -1,4 +1,4 @@
-# Security Policy — MCP Sentinel
+# Security Policy: MCP Sentinel
 
 ## What leaves your machine
 
@@ -46,7 +46,7 @@ Found a bypass or a false-negative? Please report it privately first:
   (if possible) an **inert** reproduction (data only, nothing that executes).
 - Please do not open a public issue with a working exploit before a fix ships.
 
-Bypasses become regression tests in `tests/redteam_check.py` — a confirmed,
+Bypasses become regression tests in `tests/redteam_check.py`, a confirmed,
 reproducible bypass is the most valuable contribution you can make.
 
 ## Distribution integrity

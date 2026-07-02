@@ -1,4 +1,4 @@
-# Auditoría MCP Sentinel v3.1.0 — usabilidad y protección del usuario
+# Auditoría MCP Sentinel v3.1.0: usabilidad y protección del usuario
 
 Fecha: 2026-07-02. Método: lectura directa del código (evidencia con fichero:línea),
 lente doble usabilidad + protección. El panel multi-agente se quedó sin cuota (límite
@@ -18,7 +18,7 @@ está poco descubrible y la documentación de cara al usuario va por detrás del
 
 ## Protección del usuario (hallazgos)
 
-### P1 — El watcher de integridad NO detecta la ELIMINACIÓN de un hook (alto)
+### P1: El watcher de integridad NO detecta la ELIMINACIÓN de un hook (alto)
 Evidencia: `tools/config_scan.py:321` `diff_baseline` solo itera el estado ACTUAL y
 marca `NEW`/`CHANGED`; nunca recorre las claves del baseline ausentes en el actual.
 Impacto: la forma más obvia de desarmar Sentinel (borrar su entrada `PreToolUse` de
@@ -28,7 +28,7 @@ Fix (S): en `diff_baseline`, recorrer también `old` y emitir `REMOVED hook/MCP:
 cuando una clave del baseline desaparece del estado actual. Tratar la desaparición del
 propio hook de Sentinel como severidad máxima.
 
-### P2 — Auto-desactivación vía reescritura de settings.json por shell (alto, a confirmar)
+### P2: Auto-desactivación vía reescritura de settings.json por shell (alto, a confirmar)
 Evidencia: `check_config_write` marca WRITE/EDIT sobre `.claude/settings.json`
 (`references/iocs.json` config_write_paths), pero opera sobre rutas de destino
 (`target_paths`). Un `Bash` que reescribe el fichero (`jq 'del(.hooks.PreToolUse)' … > x
@@ -41,7 +41,7 @@ escriben/mueven/editan sobre `settings.json`, `.mcp.json`, `.claude/` (redirecci
 `>`/`>>`, `mv`/`cp`/`tee`/`sed -i`/`jq … >` hacia esas rutas). Verificar antes con un
 test inerte.
 
-### P3 — La comprobación de integridad es solo-SessionStart y solo-aviso (medio)
+### P3: La comprobación de integridad es solo-SessionStart y solo-aviso (medio)
 Evidencia: `install_hooks.sh:101` registra `config_scan.py --session` únicamente en
 `SessionStart`; el modo es warn-only (documentado así). Impacto: manipulación a mitad de
 sesión no se ve hasta reiniciar, y aun entonces solo avisa (no bloquea). Un atacante que
@@ -50,7 +50,7 @@ Fix (M): (a) decidir si el drift crítico (hook propio ausente/cambiado) DEBE bl
 vez de avisar; (b) re-verificar integridad periódicamente o en PreToolUse de forma barata
 (hash cacheado), no solo al arrancar.
 
-### P4 — Fail-open silencioso si la base de IOCs no carga (medio)
+### P4: Fail-open silencioso si la base de IOCs no carga (medio)
 Evidencia: `hooks/sentinel_preflight.py:84` `load_iocs` devuelve `{}` ante CUALQUIER
 excepción; `load_feed_domains:116` devuelve `set()` igual. Impacto: si `iocs.b64` falta,
 se corrompe, o un atacante lo trunca, Sentinel se queda sin firmas y **permite todo en
@@ -60,7 +60,7 @@ Fix (S): si `load_iocs()` devuelve vacío (o el fichero esperado no existe), emi
 aviso visible una vez por sesión ("Sentinel sin base de firmas: protección degradada").
 Considerar incluir el hash de `iocs.b64` en el baseline de integridad.
 
-### P5 — La capa de IA envía contenido del tool SIN redactar a la API (medio)
+### P5: La capa de IA envía contenido del tool SIN redactar a la API (medio)
 Evidencia: `hooks/sentinel_ai.py` `build_prompt` mete `command`/`file_path`/`url`
 (truncados a 300) en el prompt que va a `api.anthropic.com`. Es opt-in y off por defecto,
 pero esos campos pueden contener secretos (un comando con un token, una API key).
@@ -70,7 +70,7 @@ Fix (S): redactar antes de enviar reutilizando `sentinel_quarantine.redact()` so
 campos en `build_prompt`; y avisar/documentar en el momento de activar `SENTINEL_AI` que
 se enviará contenido (redactado) a la API.
 
-### P6 — Sin patrones nativos de Windows en IOCs (bajo-medio)
+### P6: Sin patrones nativos de Windows en IOCs (bajo-medio)
 Evidencia: `references/iocs.json` sensitive_paths usa formas Unix (`~/.ssh`, `~/.aws`).
 La normalización de rutas (2.5.0) ayuda al matching, pero faltan objetivos Windows
 (`%USERPROFILE%`, `%APPDATA%`, `*.ppk`, credential store). Impacto: menor cobertura en
@@ -78,7 +78,7 @@ Windows. Fix (M): añadir patrones nativos Windows.
 
 ## Usabilidad y experiencia (hallazgos)
 
-### U1 — Potencia de v3 poco descubrible; falta un comando de estado (alto para adopción)
+### U1: Potencia de v3 poco descubrible; falta un comando de estado (alto para adopción)
 Evidencia: la config vive en variables de entorno dispersas (`SENTINEL_AI`,
 `SENTINEL_SHADOW`, `SENTINEL_AI_MODEL`, `SENTINEL_AI_BUDGET`, `SENTINEL_LANG`,
 `SENTINEL_ALLOWLIST_PATH`…) sin un punto único que las muestre. `sentinel_stats.py`
@@ -88,7 +88,7 @@ de forma permanente. Fix (M): un comando `sentinel status` (o `config_scan.py --
 que muestre estado de hooks, modo (normal/sombra), IA on/off + presupuesto gastado,
 tamaño del feed, fecha del baseline, y las variables disponibles con su valor actual.
 
-### U2 — La descripción de SKILL.md describe v2, no v3 (medio)
+### U2: La descripción de SKILL.md describe v2, no v3 (medio)
 Evidencia: `SKILL.md` frontmatter `version: "3.1.0"` pero la descripción sigue diciendo
 "v2 adds a real-time protection layer… hard-blocks confirmed-malicious tool calls"
 (modelo de bloqueo duro), sin mencionar el modelo ask, la IA opcional, el modo sombra,
@@ -96,13 +96,13 @@ attack-chain, dataflow. Impacto: la primera impresión (y lo que un índice de s
 muestra) está desactualizada y subvende el producto. Fix (S): reescribir la descripción
 a v3.
 
-### U3 — Instalador no multiplataforma; depende de jq (medio)
+### U3: Instalador no multiplataforma; depende de jq (medio)
 Evidencia: `install_hooks.sh:13,36` requiere `bash`+`jq`+`python3`; en Windows nativo el
 tester tuvo que registrar el hook a mano (RELEASE_NOTES). Impacto: fricción/abandono en
 Windows y en máquinas sin jq. Fix (M): `install_hooks.py` solo-stdlib (edita
 settings.json en Python), multiplataforma; deja el .sh como atajo.
 
-### U4 — Falta guía "qué hago cuando Sentinel me pregunta" para no-devs (medio)
+### U4: Falta guía "qué hago cuando Sentinel me pregunta" para no-devs (medio)
 Evidencia: los mensajes del hook (`_MSG`) son claros pero no hay un onboarding corto que
 explique al usuario final qué significa Allow/Deny, cómo confiar permanentemente, cómo
 ver el historial, cómo desactivar temporalmente o ajustar un falso positivo. Fix (S):
@@ -129,7 +129,7 @@ media página en README + enlace desde el mensaje del hook.
 | U3 | Instalador multiplataforma en Python | Usabilidad | Medio | M |
 | P6 | Patrones nativos Windows | Protección | Bajo | M |
 
-## Quick wins (alto valor, esfuerzo S) — orden sugerido
+## Quick wins (alto valor, esfuerzo S): orden sugerido
 1. **P1** detectar eliminación en `diff_baseline` (+ regresión). El hueco más serio, arreglo pequeño. **[HECHO 2026-07-02]**
 2. **P4** fail-open ruidoso cuando faltan firmas. **[HECHO 2026-07-02]**
 3. **P5** redactar en `sentinel_ai.build_prompt` (reutiliza `redact()`). **[HECHO 2026-07-02]**

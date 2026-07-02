@@ -130,7 +130,7 @@ def expect(name, payload, expected_decision, expected_substr=None,
         resp = run_hook(payload, stdin_override=stdin_override,
                         allowlist_path=allowlist_path, feed_path=feed_path, lang=lang)
     except Exception as e:
-        print(f"{FAIL} {name}: hook crashed — {e}")
+        print(f"{FAIL} {name}: hook crashed: {e}")
         return False
 
     decision = resp.get("decision", "<missing>")
@@ -418,7 +418,7 @@ def main():
       stdin_override=bom + json.dumps(ssh_payload).encode())
 
     # Bug #3: native-Windows paths use backslashes. Build a backslash version of
-    # the real home path so the test is portable (no drive letter needed — the
+    # the real home path so the test is portable (no drive letter needed, the
     # separator is the bug). Without _norm_path these never match the IOC patterns.
     home = os.path.expanduser("~")
     win_ssh = (home + "/.ssh/id_rsa").replace("/", "\\")
@@ -499,7 +499,7 @@ def main():
                          any("NEW hook" in d for d in cs.diff_baseline(s2, s1))))
     results.append(check("config-scan: integrity drift detects a REMOVED hook (self-disable attempt)",
                          any("REMOVED hook" in d for d in cs.diff_baseline(s1, s2))))
-    _selftamper = {"drift": ["REMOVED hook — SENTINEL PROTECTION MAY BE DISABLED: "
+    _selftamper = {"drift": ["REMOVED hook, SENTINEL PROTECTION MAY BE DISABLED: "
                              "PreToolUse:python3 sentinel_preflight.py"], "commands": [], "injection": []}
     results.append(check("config-scan: self-tamper drift raises a prominent PROTECTION-DISABLED alarm (P3)",
                          (cs.session_alarm(_selftamper) or "").find("PROTECTION MAY BE DISABLED") >= 0

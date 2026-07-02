@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-MCP Sentinel — quarantine / forensic hold (PostToolUse, post-facto).
+MCP Sentinel: quarantine / forensic hold (PostToolUse, post-facto).
 
 Classic antivirus keeps a quarantine of what it caught. Sentinel's analog: when a
 tool call that PreToolUse FLAGGED (ask) was nonetheless approved and ran,
-PostToolUse files a redacted forensic record — command + truncated output +
-metadata — under ~/.claude/sentinel/quarantine/. This is NOT an execution
+PostToolUse files a redacted forensic record (command + truncated output +
+metadata) under ~/.claude/sentinel/quarantine/. This is NOT an execution
 sandbox; it is an audit trail of risky-but-approved actions, with secrets
 redacted so the record itself never leaks credentials.
 

@@ -1,4 +1,4 @@
-# Demo 6 — Modo sombra (no bloquea, solo cuenta)
+# Demo 6: Modo sombra (no bloquea, solo cuenta)
 
 **Usuario:** Trabajo nocturno automático; no quiero que nada me pare.
 
@@ -15,7 +15,7 @@ Bash  cat ~/.aws/credentials
 Motivo: [CRITICAL] sensitive path: ~/.aws/credentials
 ```
 
-**Resultado:** `allow (con aviso)` — Con SENTINEL_SHADOW=on, Sentinel evalúa pero NUNCA bloquea: deja pasar y anota 'te habría parado N veces'. Ideal para medir antes de activar la defensa dura.
+**Resultado:** `allow (con aviso)`: con SENTINEL_SHADOW=on, Sentinel evalúa pero NUNCA bloquea: deja pasar y anota 'te habría parado N veces'. Ideal para medir antes de activar la defensa dura.
 
 ---
 

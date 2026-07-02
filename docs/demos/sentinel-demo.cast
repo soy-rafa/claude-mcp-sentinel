@@ -1,5 +1,5 @@
-{"version": 2, "width": 96, "height": 30, "timestamp": 1751000000, "title": "MCP Sentinel \u2014 demo", "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"}}
-[0.8, "o", "\u001b[1;35m🛡  MCP Sentinel — demo en vivo\u001b[0m  \u001b[2m(salida real del hook)\u001b[0m\r\n"]
+{"version": 2, "width": 96, "height": 30, "timestamp": 1751000000, "title": "MCP Sentinel: demo", "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"}}
+[0.8, "o", "\u001b[1;35m🛡  MCP Sentinel: demo en vivo\u001b[0m  \u001b[2m(salida real del hook)\u001b[0m\r\n"]
 [0.8, "o", "\r\n\u001b[1;36m▶ Usuario:\u001b[0m "]
 [0.84, "o", "L"]
 [0.88, "o", "e"]
@@ -260,7 +260,7 @@
 [22.32, "o", "\r\n"]
 [23.02, "o", "\u001b[2m  Claude quiere ejecutar:\u001b[0m \u001b[33mBash: echo {} > ~/.claude/settings.json\u001b[0m\r\n"]
 [23.27, "o", "\u001b[1;31m🛡️ MCP Sentinel ha marcado una llamada de Bash para tu decisión.\u001b[0m\r\n"]
-[23.52, "o", "\u001b[1;31mMotivo: [HIGH] shell command modifies an agent-config/hook file (settings.json/.mcp.json/.claude) — possible protection tamper\u001b[0m\r\n"]
+[23.52, "o", "\u001b[1;31mMotivo: [HIGH] shell command modifies an agent-config/hook file (settings.json/.mcp.json/.claude): possible protection tamper\u001b[0m\r\n"]
 [23.77, "o", "\u001b[1;31mAprobarla permite esta llamada; MCP Sentinel volverá a preguntar la próxima vez. Deniégala para bloquearla.\u001b[0m\r\n"]
 [24.02, "o", "\u001b[1;31mPor qué: Un comando de shell modifica la config del propio Sentinel, podría desactivar la protección.\u001b[0m\r\n"]
 [25.32, "o", ""]

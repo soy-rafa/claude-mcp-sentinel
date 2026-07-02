@@ -1,4 +1,4 @@
-# Demo 1 — Trabajo normal (Sentinel no molesta)
+# Demo 1: Trabajo normal (Sentinel no molesta)
 
 **Usuario:** Lee el package.json del proyecto.
 
@@ -10,7 +10,7 @@ Read  package.json
 
 _(sin salida = permitido en silencio, sin fricción)_
 
-**Resultado:** `allow` — Acción legítima: Sentinel no dice nada y la deja pasar. Cero fricción en el día a día.
+**Resultado:** `allow`: Acción legítima. Sentinel no dice nada y la deja pasar. Cero fricción en el día a día.
 
 ---
 

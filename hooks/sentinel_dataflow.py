@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-MCP Sentinel — cross-server data-flow detection (v3, PostToolUse-driven).
+MCP Sentinel: cross-server data-flow detection (v3, PostToolUse-driven).
 
 A subtle multi-server attack: MCP server A returns sensitive data (a token, a
 key, a private key), and the agent then passes that same value as an argument to
-a DIFFERENT MCP server B — exfiltration laundered across servers. No single tool
+a DIFFERENT MCP server B: exfiltration laundered across servers. No single tool
 call looks malicious; the danger is in the FLOW A -> B.
 
 This module fingerprints secret-shaped values seen in a server's OUTPUT and, when

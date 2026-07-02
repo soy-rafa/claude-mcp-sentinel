@@ -3,7 +3,7 @@
 All notable changes to MCP Sentinel are recorded here. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/). Versioning is [semver](https://semver.org/).
 
-## [Unreleased] — mejoras de producto (todas cero-token por defecto)
+## [Unreleased]: mejoras de producto (todas cero-token por defecto)
 
 Principio rector: **cero tokens por defecto; lo que consume es opt-in y desactivable**
 (`docs/PRODUCT-ROADMAP.md`). Nuevo:
@@ -42,18 +42,18 @@ Auditoría v3.1.0 (`docs/AUDIT-v3.md`, lente usabilidad + protección). Cerrados
   opcional, modo sombra, attack-chain, dataflow, integridad, AV-safe), no la v2.
 
 Segunda tanda (esfuerzo M) cerrada también:
-- **P2 — auto-desactivación por shell:** `check_config_write` ahora escanea comandos;
+- **P2, auto-desactivación por shell:** `check_config_write` ahora escanea comandos;
   un `Bash` que escribe/mueve/borra/edita-in-place `settings.json`/`.mcp.json`/`.claude`
   (con el verbo apuntando al fichero) se marca como posible tamper de la protección. Las
   lecturas (`cat`, `jq` a otro destino) no se marcan (0 FP).
-- **U1 — comando de estado:** `tools/sentinel_status.py` muestra en un solo sitio hooks
+- **U1, comando de estado:** `tools/sentinel_status.py` muestra en un solo sitio hooks
   registrados, base de firmas, feed, baseline, modo (normal/sombra), IA on/off +
   presupuesto, telemetría, allowlist y las variables `SENTINEL_*` con cómo tocarlas.
-- **P6 — paridad Windows:** patrones de credenciales AWS con cualquier separador y rutas
+- **P6, paridad Windows:** patrones de credenciales AWS con cualquier separador y rutas
   con variables de entorno Windows (`%USERPROFILE%`/`%APPDATA%`…) hacia claves/creds.
-- **U3 — instalador multiplataforma:** `hooks/install_hooks.py` (solo stdlib, sin bash/jq),
+- **U3, instalador multiplataforma:** `hooks/install_hooks.py` (solo stdlib, sin bash/jq),
   idempotente, preserva hooks ajenos, `--uninstall`. Cubre Windows nativo.
-- **P3 — alarma de auto-tamper + refuerzo opt-in:** el escaneo de SessionStart y el
+- **P3, alarma de auto-tamper + refuerzo opt-in:** el escaneo de SessionStart y el
   informe destacan "PROTECCIÓN POSIBLEMENTE DESACTIVADA" si el propio hook de Sentinel
   desaparece/cambia (se apoya en P1). La detección en tiempo real del intento la da P2.
   Nuevo `SENTINEL_INTEGRITY_ENFORCE` (apagado por defecto): cuando se activa, un comando
@@ -63,7 +63,7 @@ Segunda tanda (esfuerzo M) cerrada también:
 
 Suite 108/108, precisión FP=0/91, red-team 69/0/0.
 
-## [3.1.0] - 2026-06-29 — endurecimiento red-team
+## [3.1.0] - 2026-06-29: endurecimiento red-team
 
 > Noche autónoma de red-team (equipo rojo): una batería de "skills maliciosas"
 > inertes atacó a Sentinel capa por capa y combinando vectores. Resultado:
@@ -148,40 +148,40 @@ safe distribution. Driven by multi-agent threat research (`docs/V3-PROPOSAL.md`,
 `docs/v3-backlog.md`). Built feature-by-feature, each a tested commit; the suite
 stayed green throughout (81/81, precision FP=0/91, recall 44/44).
 
-### Added — intelligence
-- **AI escalation layer (`hooks/sentinel_ai.py`)** — opt-in (`SENTINEL_AI=on`,
+### Added: intelligence
+- **AI escalation layer (`hooks/sentinel_ai.py`)**: opt-in (`SENTINEL_AI=on`,
   off by default), **never on the allow hot path**. Only the rare ambiguous
   `ask` escalates to the selected model with a tiny prompt; daily token budget
   (`SENTINEL_AI_BUDGET`) with a hard cap, 3s timeout, **fail-open to the local
   decision**, and every token reported in telemetry + the statusbar.
 
-### Added — visibility
-- **Telemetry (`hooks/sentinel_stats.py`)** — atomic, fail-open daily/session/
+### Added: visibility
+- **Telemetry (`hooks/sentinel_stats.py`)**: atomic, fail-open daily/session/
   totals (decisions, AI tokens, quarantine, chains).
-- **Statusbar segment** in `~/.claude/custom_bar.sh` — `🛡 SNTL ⚑N AI:Nk`
+- **Statusbar segment** in `~/.claude/custom_bar.sh`: `🛡 SNTL ⚑N AI:Nk`
   (threats flagged today + AI token spend), Bash+jq, clean fallback.
-- **Quarantine / forensic hold (`hooks/sentinel_quarantine.py`)** — redacted
+- **Quarantine / forensic hold (`hooks/sentinel_quarantine.py`)**: redacted
   post-facto record of approved-but-flagged actions; `list/review/release/purge`.
 
-### Added — detection (off the hot path)
+### Added: detection (off the hot path)
 - **Config/MCP static scanner** grew anti-line-jumping (hidden instructions /
   Unicode-ANSI-HTML obfuscation in tool descriptions), endpoint/proxy-redirection
   and risky-env (`NODE_OPTIONS`/`LD_PRELOAD`/proxy) checks, and env-injection /
   command-substitution in MCP args.
-- **Attack-chain / trajectory detection** — credential-access→egress and
+- **Attack-chain / trajectory detection**: credential-access→egress and
   credential-harvesting across a session.
-- **Cross-server data-flow** — fingerprints secrets output by one MCP server and
+- **Cross-server data-flow**: fingerprints secrets output by one MCP server and
   flags them entering another (laundered exfiltration).
-- **Cross-platform parity** — PowerShell dangerous patterns (IEX DownloadString,
+- **Cross-platform parity**: PowerShell dangerous patterns (IEX DownloadString,
   `iwr|iex`, `-EncodedCommand`, `Net.Sockets.TCPClient`).
 - **Allowlist-bypass signatures** (CVE-2025-66032) and an **expanded injection +
   obfuscation corpus**.
 
-### Added — robustness & safety
+### Added: robustness & safety
 - **Integrity baseline** uses full SHA-256 with stale-baseline migration.
-- **Feed auto-sync hardening** — anti-poisoning guard (refuse a >50% shrink) +
+- **Feed auto-sync hardening**: anti-poisoning guard (refuse a >50% shrink) +
   version/provenance metadata.
-- **Antivirus-safe distribution** — `tools/vault.py` encodes threat data base64
+- **Antivirus-safe distribution**: `tools/vault.py` encodes threat data base64
   at rest; `iocs.b64` (loaded by `load_iocs`), the URLhaus feed, and the attack
   corpus ship with **no plaintext signatures**, so a defended machine's antivirus
   does not raise false alarms. See `ANTIVIRUS.md`.
@@ -211,7 +211,7 @@ a single tool call.
   cannot do (it only sees one tool call):
   - **Integrity baseline (CVE-2025-59536).** Hashes every hook command, MCP
     server command, and CLAUDE.md into a trusted baseline
-    (`~/.claude/sentinel-baseline.b64`, base64 at rest) and reports drift — a
+    (`~/.claude/sentinel-baseline.b64`, base64 at rest) and reports drift: a
     malicious hook planted in a cloned repo's `.claude/settings.json` shows up as
     a NEW hook.
   - **Static scan.** Runs every hook/MCP command through the SAME
@@ -224,7 +224,7 @@ a single tool call.
   `config_scan.py --session` at SessionStart, so each session opens with a quick,
   non-blocking config/MCP/integrity check. Whether it should ever BLOCK a session
   is a deliberate maintainer decision (left as warn-only for now).
-- **`docs/V3-PROPOSAL.md`** — the full v3 threat model and 9 prioritised
+- **`docs/V3-PROPOSAL.md`**: the full v3 threat model and 9 prioritised
   capabilities (P0 done here; P1/P2 are the deterministic .mcp.json endpoint
   scanner, cross-server shadowing detection, and PostToolUse data-flow tracking).
 
@@ -249,11 +249,11 @@ Measured against a corpus of 76 realistic benign tool calls and 34 attacks
 - **Field-scoped scanning.** Checks no longer flatten the whole tool input.
   Commands are matched only on `command`, paths on file/path targets, URLs on
   `url`(+command). File **content** being written (Write.content/Edit.new_string)
-  is no longer scanned for commands/URLs/domains — writing text that *mentions*
+  is no longer scanned for commands/URLs/domains: writing text that *mentions*
   an attack is not performing it. This also ends the "hook blocks its own edits"
   problem when working on Sentinel.
 - **Env vars need an exfil sink.** A secret env var is flagged only when a
-  command dereferences it (or dumps `env`) AND pipes it to network egress —
+  command dereferences it (or dumps `env`) AND pipes it to network egress,
   not when code, docs, or `rg 'GITHUB_TOKEN'` merely mention the name.
 - **Domain matching by host boundary**, per host. `transfer.sh` no longer
   matches `mytransfer.shopify.com`; an allowlisted host in a command (e.g.
@@ -272,8 +272,8 @@ Measured against a corpus of 76 realistic benign tool calls and 34 attacks
 
 ### Antivirus-safe distribution
 
-A security tool ships threat indicators by design — the exact strings antivirus
-looks for. So they are now encoded at rest:
+A security tool ships threat indicators by design (the exact strings antivirus
+looks for). So they are now encoded at rest:
 
 - **Malware-domain feed is base64 at rest** (`blocklist-feed.b64`, marker
   `#MCP-SENTINEL-B64`); the hook decodes ~400 domains in memory. The plaintext
@@ -300,15 +300,15 @@ looks for. So they are now encoded at rest:
 Native-Windows fixes. A community tester running Claude Code natively on Windows
 (not WSL) found that the runtime hook installed, ran, returned answers, and yet
 protected nothing. Two root causes, both in the I/O layer (detection logic and
-`iocs.json` untouched). Credit to the reporter (handle TBD — fill in before
+`iocs.json` untouched). Credit to the reporter (handle TBD, fill in before
 publishing).
 
 ### Fixed
 
 - **Fail-open on a UTF-8 BOM in stdin (critical, all platforms).** On Windows the
   stdin handed to the hook can start with a BOM (EF BB BF); `json.loads` rejects
-  it, and the hook's fail-open path then allowed **every** call silently — the
-  worst failure mode for a security tool. New `_read_stdin_payload()` reads raw
+  it, and the hook's fail-open path then allowed **every** call silently (the
+  worst failure mode for a security tool). New `_read_stdin_payload()` reads raw
   bytes and decodes with `utf-8-sig`, stripping the BOM. Shared by both hooks.
 - **Sensitive-path matching missed native Windows paths.** IOC patterns are
   Unix-style (`~/.ssh/`); Windows passes `C:\Users\me\.ssh\id_rsa` with
@@ -371,7 +371,7 @@ incident list.
   or Auth-Key required), parses it, dedupes, and writes a one-domain-per-line
   `references/blocklist-feed.txt` (atomic). Accepts `--source` (URL or local
   file, for offline/tests) and `--output`. On network/parse failure it leaves
-  the existing feed untouched and exits non-zero — never clobbers with an empty
+  the existing feed untouched and exits non-zero, never clobbers with an empty
   list. Initial fetch: 418 domains.
 - **Exact-host feed matching in the PreToolUse hook.** New `load_feed_domains()`
   loads the feed into a set; `extract_hosts()` pulls hostnames from URLs and
@@ -411,7 +411,7 @@ a user decision, remembered once approved.
   dangerous command patterns) now return `permissionDecision: "ask"`, routing
   the call to Claude Code's native Allow/Deny prompt instead of blocking. The
   message names the entity and, when applicable, says approving will trust it.
-- **PostToolUse hook (`hooks/sentinel_postflight.py`) — "remember on approve".**
+- **PostToolUse hook (`hooks/sentinel_postflight.py`): "remember on approve".**
   PostToolUse only fires when a call actually ran (the user approved at the
   prompt). For a flagged **path or domain** it appends that concrete entity to
   `~/.claude/sentinel-allowlist.json` (atomic write, deduped) so Sentinel stops
@@ -475,10 +475,10 @@ test suite that asserts it.
   `hookSpecificOutput`) into `{"decision", "reason"}`; the 20 test cases are
   unchanged. Result: **20/20 passed**.
 
-## [2.0.0] — 2026-04-17
+## [2.0.0] - 2026-04-17
 
 This release turns Sentinel from a static analyzer into a runtime guard. The v1
-scanner is unchanged and still shipped — v2 layers a real-time protection hook
+scanner is unchanged and still shipped; v2 layers a real-time protection hook
 on top of it.
 
 ### Added
@@ -490,7 +490,7 @@ on top of it.
 - **Bundled IOC library (`references/iocs.json`).** ~60 patterns across
   five categories: sensitive paths, sensitive env vars, suspicious network
   destinations, dangerous commands, and prompt-injection phrases. Includes
-  hardcoded known-malicious domains from confirmed incidents — the Postmark
+  hardcoded known-malicious domains from confirmed incidents: the Postmark
   MCP backdoor's `giftshop.club` is in there by default.
 - **Installer/uninstaller scripts (`hooks/install_hooks.sh`, `hooks/uninstall_hooks.sh`).**
   Idempotent, validate JSON, keep a timestamped backup of `settings.json`, and
@@ -517,7 +517,7 @@ on top of it.
   incident. v1 static-scanning features preserved as their own section. Added
   benchmark table for the v2 hook (20/20 regression cases pass).
 - **Failure model.** Any v2 failure (missing IOC file, malformed stdin, hook
-  crash) defaults to `allow` — the hook will never break Claude Code.
+  crash) defaults to `allow`: the hook will never break Claude Code.
 
 ### Not changed
 
@@ -543,7 +543,7 @@ analysis of v1.0.15 would have found nothing; a runtime hook that saw a POST
 to an unknown `.club` domain would have blocked the very first malicious call.
 That's the gap v2 closes.
 
-## [1.0.0] — 2026-04-12
+## [1.0.0] - 2026-04-12
 
 Initial public release.
 
@@ -551,6 +551,6 @@ Initial public release.
 
 - SKILL.md with threat-intel scanning, source integrity verification,
   coherence analysis, update diff detection, and scheduled monitoring.
-- `references/threat-sources.md` — reference list of vulnerability databases.
-- `references/threat-db-template.json` — local threat database schema.
+- `references/threat-sources.md`: reference list of vulnerability databases.
+- `references/threat-db-template.json`: local threat database schema.
 - MIT license.

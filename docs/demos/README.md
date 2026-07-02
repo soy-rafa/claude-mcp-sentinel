@@ -1,4 +1,4 @@
-# MCP Sentinel — demos (cómo actúa)
+# MCP Sentinel: demos (cómo actúa)
 
 Material para enseñar cómo se comporta Sentinel. **Todo es salida REAL del hook**
 (no editada): los `.md` y la animación se generaron feeding payloads reales al
@@ -18,15 +18,15 @@ hook y capturando su respuesta. Nada se ejecuta; solo se muestra el veredicto.
 
 ## Animación / vídeo
 
-- **`demo.sh`** — demo en vivo en tu terminal (colores, pausas, output real).
+- **`demo.sh`**: demo en vivo en tu terminal (colores, pausas, output real).
   Ideal para **grabar la pantalla** para un reel:
   ```
   bash docs/demos/demo.sh            # ritmo normal
   DEMO_PACE=2 bash docs/demos/demo.sh   # más lento para grabar
   ```
-- **`sentinel-demo.gif`** — animación lista para pegar en un post/reel (~25s, 2.7 MB,
+- **`sentinel-demo.gif`**: animación lista para pegar en un post/reel (~25s, 2.7 MB,
   colores, salida real). Generada con `cast2gif.py` (Pillow + fuente Menlo).
-- **`sentinel-demo.cast`** — animación en formato [asciinema](https://asciinema.org)
+- **`sentinel-demo.cast`**: animación en formato [asciinema](https://asciinema.org)
   (~26s). Reprodúcela, súbela o conviértela a GIF:
   ```
   asciinema play docs/demos/sentinel-demo.cast     # reproducir en terminal

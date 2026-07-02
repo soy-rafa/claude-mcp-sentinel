@@ -1,4 +1,4 @@
-# MCP Sentinel — Runtime Protection Hooks
+# MCP Sentinel: Runtime Protection Hooks
 
 This folder contains the runtime protection layer that ships with Sentinel v2.
 
@@ -9,9 +9,9 @@ Registers two hooks with Claude Code.
 **PreToolUse (`sentinel_preflight.py`)** runs before every tool call a skill or MCP tries to make,
 inspecting it against the bundled `references/iocs.json` library plus the user's allowlist. It returns:
 
-- **deny** — confirmed-malicious indicators only (known-bad domains from real incidents). Hard block, non-overrideable.
-- **ask** — suspicious heuristics (sensitive paths, env vars, exfil vectors, dangerous commands). Routed to Claude Code's native Allow/Deny prompt; nothing is blocked outright.
-- **allow** — clean or already-trusted calls pass silently.
+- **deny**: confirmed-malicious indicators only (known-bad domains from real incidents). Hard block, non-overrideable.
+- **ask**: suspicious heuristics (sensitive paths, env vars, exfil vectors, dangerous commands). Routed to Claude Code's native Allow/Deny prompt; nothing is blocked outright.
+- **allow**: clean or already-trusted calls pass silently.
 
 **PostToolUse (`sentinel_postflight.py`)** implements *remember on approve*. PostToolUse only fires
 when a call actually ran (the user approved it). When that happens for a flagged **path or domain**,
@@ -60,8 +60,8 @@ for hands-off updates.
 
 ## Files
 
-- `sentinel_preflight.py` — PreToolUse hook. Reads tool call from stdin, returns allow/deny/ask JSON.
-- `sentinel_postflight.py` — PostToolUse hook. Remembers approved path/domain findings into the allowlist.
-- `install_hooks.sh` — registers both hooks in Claude Code settings.
-- `uninstall_hooks.sh` — removes both hooks.
-- `../tools/update_blocklist.py` — refreshes the malware-host blocklist feed.
+- `sentinel_preflight.py`: PreToolUse hook. Reads tool call from stdin, returns allow/deny/ask JSON.
+- `sentinel_postflight.py`: PostToolUse hook. Remembers approved path/domain findings into the allowlist.
+- `install_hooks.sh`: registers both hooks in Claude Code settings.
+- `uninstall_hooks.sh`: removes both hooks.
+- `../tools/update_blocklist.py`: refreshes the malware-host blocklist feed.

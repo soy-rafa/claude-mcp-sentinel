@@ -47,7 +47,7 @@ def typ(prefix, s, dt=0.04):
         emit(ch, dt)
     emit("\r\n", 0.3)
 
-line(f"{C['mag']}🛡  MCP Sentinel — demo en vivo{C['reset']}  {C['dim']}(salida real del hook){C['reset']}", 0.8)
+line(f"{C['mag']}🛡  MCP Sentinel: demo en vivo{C['reset']}  {C['dim']}(salida real del hook){C['reset']}", 0.8)
 for user, toolline, payload in SCEN:
     v = verdict(payload)
     typ(f"\r\n{C['cyan']}▶ Usuario:{C['reset']} ", user)
@@ -61,7 +61,7 @@ for user, toolline, payload in SCEN:
 line(f"\r\n{C['mag']}🛡  Local. Privado. Cero tokens por defecto.{C['reset']}", 1.0)
 
 header = {"version": 2, "width": 96, "height": 30, "timestamp": 1751000000,
-          "title": "MCP Sentinel — demo", "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"}}
+          "title": "MCP Sentinel: demo", "env": {"SHELL": "/bin/zsh", "TERM": "xterm-256color"}}
 with open(CAST, "w") as f:
     f.write(json.dumps(header) + "\n")
     for e in events:

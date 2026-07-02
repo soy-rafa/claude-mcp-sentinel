@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MCP Sentinel — cross-platform installer (stdlib only, no bash/jq).
+MCP Sentinel: cross-platform installer (stdlib only, no bash/jq).
 
 Mirrors install_hooks.sh for machines without bash+jq (native Windows especially,
 where a community tester had to register the hook by hand). Registers three hooks

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-MCP Sentinel — status command.
+MCP Sentinel: status command.
 
 One place to answer "is Sentinel on, what mode, what has it done, and how do I
 change it?". Read-only, never on the hot path, fail-open per section (a broken
+
 section prints a dash, never crashes the report).
 
 Run:  python3 tools/sentinel_status.py
@@ -32,7 +33,7 @@ def _onoff(env, default="off"):
 
 def build_report():
     import sentinel_preflight as pf
-    lines = ["🛡️  MCP Sentinel — status", ""]
+    lines = ["🛡️  MCP Sentinel: status", ""]
 
     # --- Hooks registered in settings.json (are we actually wired in?) --------
     def hooks_section():
@@ -51,13 +52,13 @@ def build_report():
     if isinstance(seen, dict) and seen:
         for ev in ("PreToolUse", "PostToolUse", "SessionStart"):
             ok = seen.get(ev)
-            lines.append(f"  {ev:<12} {'✅ registered' if ok else '❌ NOT registered — run hooks/install_hooks.sh'}")
+            lines.append(f"  {ev:<12} {'✅ registered' if ok else '❌ NOT registered: run hooks/install_hooks.sh'}")
     else:
         lines.append("  (could not read settings.json)")
 
     # --- Signature base / feed / baseline -------------------------------------
     present = _safe(lambda: pf._iocs_present(), False)
-    lines.append(f"Signature base (IOCs): {'✅ present' if present else '⚠️ MISSING — protection degraded, reinstall the skill'}")
+    lines.append(f"Signature base (IOCs): {'✅ present' if present else '⚠️ MISSING: protection degraded, reinstall the skill'}")
     feed_n = _safe(lambda: len(pf.load_feed_domains()), "-")
     lines.append(f"Blocklist feed: {feed_n} domains")
 
@@ -65,7 +66,7 @@ def build_report():
         import config_scan as cs
         p = cs.BASELINE_PATH
         if not p.exists():
-            return "not set — run tools/config_scan.py --baseline"
+            return "not set: run tools/config_scan.py --baseline"
         ts = datetime.fromtimestamp(p.stat().st_mtime, timezone.utc).strftime("%Y-%m-%d")
         return f"set (updated {ts})"
     lines.append(f"Integrity baseline: {_safe(baseline_line)}")
@@ -122,7 +123,7 @@ def build_report():
         ("SENTINEL_ALLOWLIST_PATH", "override the allowlist location"),
     ):
         val = os.environ.get(env) or "(default/unset)"
-        lines.append(f"  {env}={val}   — {desc}")
+        lines.append(f"  {env}={val}   : {desc}")
     return "\n".join(lines)
 
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-MCP Sentinel — PreToolUse hook.
+MCP Sentinel: PreToolUse hook.
 
 Runs before every tool call made by Claude. Reads the tool call JSON from stdin,
 checks it against bundled IOCs (paths, domains, command patterns, env vars) and
 the user's allowlist. Returns an allow / deny decision as JSON on stdout.
 
-Zero LLM cost — pure local pattern matching. Adds <50ms latency per tool call
+Zero LLM cost: pure local pattern matching. Adds <50ms latency per tool call
 in typical cases. Only the decision message (if deny/warn) is inserted into the
 conversation, and only when something is actually blocked.
 
@@ -16,10 +16,10 @@ uses the v2.1+ schema: hookSpecificOutput.permissionDecision (allow/deny/ask),
 with permissionDecisionReason or additionalContext. An empty stdout = allow.
 
 Internal decision values from decide():
-  "allow"  — clean / trusted. Emits nothing (silent allow).
-  "deny"   — confirmed-malicious / feed hit. permissionDecision=deny.
-  "ask"    — suspicious heuristic. permissionDecision=ask (user decides).
-  "warn"   — low-signal. permissionDecision=allow + additionalContext note.
+  "allow"  : clean / trusted. Emits nothing (silent allow).
+  "deny"   : confirmed-malicious / feed hit. permissionDecision=deny.
+  "ask"    : suspicious heuristic. permissionDecision=ask (user decides).
+  "warn"   : low-signal. permissionDecision=allow + additionalContext note.
 
 Usage (registered via install_hooks.sh, or manually):
   "hooks": {
@@ -87,7 +87,7 @@ def load_iocs():
 def _iocs_present():
     """Cheap existence check for the bundled IOC library (no parse). Used to warn
     when Sentinel is running WITHOUT its signature base (e.g. an antivirus
-    quarantined iocs.b64) — in that state detection degrades to allow-all, which
+    quarantined iocs.b64), in that state detection degrades to allow-all, which
     must not be silent."""
     override = os.environ.get("SENTINEL_IOCS_PATH")
     if override:
@@ -221,12 +221,12 @@ def is_allowlisted_path(path, allowlist_paths):
 
 # ---------------------------------------------------------------------------
 # Field-scoped extraction. Earlier versions flattened the whole tool_input with
-# _collect_strings and matched every string against every check — so a Write of
+# _collect_strings and matched every string against every check, so a Write of
 # documentation that *quoted* `curl | bash`, or a config file that *mentioned*
 # GITHUB_TOKEN, was flagged. We now scope each check to the fields where the
 # signal is real: commands in `command`, paths in file/path targets, URLs in
 # `url` (+ commands). Content being written (Write.content / Edit.new_string) is
-# NOT scanned for commands/URLs — writing text that mentions an attack is not
+# NOT scanned for commands/URLs: writing text that mentions an attack is not
 # performing it. Persistence writes are caught by check_config_write on the path.
 # ---------------------------------------------------------------------------
 
@@ -281,7 +281,7 @@ def is_allowlisted_domain(text, allowlist_domains):
 def _is_allowlisted_host(host, allowlist_domains):
     """Per-host allowlist check. Used so an allowlisted host in a command (e.g.
     `security ... github.com ... | curl webhook.site`) does NOT exempt the whole
-    command — only the matching host is cleared, the malicious one still fires."""
+    command: only the matching host is cleared, the malicious one still fires."""
     host = host.lower().rstrip(".")
     for d in allowlist_domains:
         dl = d.lower()
@@ -350,7 +350,7 @@ _SECRET_DEREF_RE = re.compile(
 def check_sensitive_env(tool_name, tool_input, iocs, allowlist):
     """Flag a secret env var ONLY when it is exfiltrated: dereferenced (or env is
     dumped) AND piped/sent to a network egress tool. Mentioning a var name (code,
-    docs, `rg 'GITHUB_TOKEN'`) is not flagged — that was the biggest false-positive
+    docs, `rg 'GITHUB_TOKEN'`) is not flagged, that was the biggest false-positive
     source. entity is None (never auto-trusted)."""
     names = iocs.get("sensitive_env_vars", {}).get("patterns", [])
     for cmd in command_strings(tool_input):
@@ -364,7 +364,7 @@ def check_sensitive_env(tool_name, tool_input, iocs, allowlist):
 
 
 def check_cloud_metadata(tool_name, tool_input, iocs, allowlist):
-    """Cloud instance metadata (IMDS) access — SSRF / cloud-credential theft."""
+    """Cloud instance metadata (IMDS) access: SSRF / cloud-credential theft."""
     hosts = iocs.get("cloud_metadata", {}).get("hosts", [])
     for text in net_strings(tool_input):
         low = text.lower()
@@ -407,7 +407,7 @@ def check_config_write(tool_name, tool_input, iocs, allowlist):
     for c in command_strings(tool_input):
         if _CONFIG_TAMPER_RX.search(c):
             return ("shell command modifies an agent-config/hook file "
-                    "(settings.json/.mcp.json/.claude) — possible protection tamper",
+                    "(settings.json/.mcp.json/.claude): possible protection tamper",
                     "high", "config_tamper", None)
     return (None, None, None, None)
 
@@ -456,7 +456,7 @@ def check_suspicious_network(tool_name, tool_input, iocs, allowlist):
 
 def check_dangerous_commands(tool_name, tool_input, iocs, allowlist):
     """Dangerous shell patterns (curl|bash, reverse shells, persistence), scanned
-    only on command fields — never on file content being written."""
+    only on command fields, never on file content being written."""
     patterns = iocs.get("dangerous_commands", {}).get("patterns", [])
     allowed_commands = allowlist.get("commands", [])
     for cmd in command_strings(tool_input):
@@ -509,7 +509,7 @@ def check_feed_blocklist(tool_input, feed, allowed_domains):
     ``allowed_domains`` is the merged user + iocs domain allowlist. Returns
     (reason, severity, category, entity). A hit is critical (hard deny), but
     unlike the hand-curated known_malicious list, a feed hit IS allowlist-
-    overrideable — automated feeds can carry the occasional false positive.
+    overrideable, automated feeds can carry the occasional false positive.
     """
     if not feed:
         return (None, None, None, None)
@@ -660,7 +660,7 @@ def _recent_user_text(transcript_path, max_prompts=5, hard_cap=8_000_000):
     for typical sessions) so recent prompts aren't missed when big tool outputs
     dominate the tail. Only lines carrying a ``promptId`` are JSON-parsed, so the
     cost stays low even on a multi-MB read. Tool-result user messages and system
-    interruption markers are skipped — we only want what the human typed.
+    interruption markers are skipped, we only want what the human typed.
     """
     if not transcript_path:
         return ""
@@ -765,7 +765,7 @@ _MSG = {
     },
     "degraded": {
         "en": ("⚠️ MCP Sentinel is running WITHOUT its signature base (iocs.b64/iocs.json not found). "
-               "Protection is degraded — calls are being allowed unchecked. Reinstall the skill or "
+               "Protection is degraded: calls are being allowed unchecked. Reinstall the skill or "
                "restore the file (an antivirus may have quarantined it)."),
         "es": ("⚠️ MCP Sentinel está funcionando SIN su base de firmas (no encuentra iocs.b64/iocs.json). "
                "La protección está degradada: las llamadas se permiten sin revisar. Reinstala la skill o "
@@ -780,17 +780,17 @@ def render(key, lang, **kw):
     return variants.get(lang, variants["en"]).format(**kw)
 
 
-# Plain-language, ZERO-TOKEN "why" per category. Static text — no model call, ever.
+# Plain-language, ZERO-TOKEN "why" per category. Static text, no model call, ever.
 _WHY = {
-    "sensitive_path": {"en": "Reads a credential/secret file — a common first step in data theft.",
+    "sensitive_path": {"en": "Reads a credential/secret file, a common first step in data theft.",
                        "es": "Lee un fichero de credenciales/secretos, primer paso habitual de un robo de datos."},
     "sensitive_env": {"en": "Sends an environment secret to the network (exfiltration).",
                       "es": "Manda un secreto del entorno a la red (exfiltración)."},
-    "cloud_metadata": {"en": "Touches the cloud metadata endpoint — used to steal instance credentials.",
+    "cloud_metadata": {"en": "Touches the cloud metadata endpoint, used to steal instance credentials.",
                        "es": "Toca el endpoint de metadata cloud, usado para robar credenciales de la instancia."},
-    "config_write": {"en": "Writes a persistence/agent-config file — can hijack or persist.",
+    "config_write": {"en": "Writes a persistence/agent-config file, can hijack or persist.",
                      "es": "Escribe un fichero de persistencia/config del agente, puede secuestrar o persistir."},
-    "config_tamper": {"en": "A shell command is modifying Sentinel's own config — it may be disabling protection.",
+    "config_tamper": {"en": "A shell command is modifying Sentinel's own config, it may be disabling protection.",
                       "es": "Un comando de shell modifica la config del propio Sentinel, podría desactivar la protección."},
     "suspicious_network": {"en": "Contacts an exfiltration-style destination (pastebin/raw IP/abuse TLD).",
                            "es": "Contacta un destino tipo exfiltración (pastebin/IP cruda/TLD de abuso)."},
@@ -807,7 +807,7 @@ def _explain_mode():
     """How much explanation to attach. 'static' (default) = a canned, ZERO-TOKEN
     'why' line; 'off' = nothing extra (leanest context footprint, for token-lean
     users); 'ai' = reuse the AI verdict's reason when present. No mode spends tokens
-    on its own — 'ai' only reuses a verdict already produced by the opt-in AI layer."""
+    on its own, 'ai' only reuses a verdict already produced by the opt-in AI layer."""
     m = os.environ.get("SENTINEL_EXPLAIN", "static").strip().lower()
     return m if m in ("static", "off", "ai") else "static"
 
@@ -894,7 +894,7 @@ def record_event(payload, decision, category, ai_tokens=0, would_block=False, en
         if chain:
             st["chain"] = chain
         # Track auto-trustable entities (a concrete path/domain) so `sentinel
-        # suggest` can turn repeated asks into one-click allowlist entries — the
+        # suggest` can turn repeated asks into one-click allowlist entries, the
         # ask-fatigue fix. Only path/domain categories; commands/env never suggested.
         if entity and category in AUTO_REMEMBER_CATEGORIES:
             sug = st.get("suggest") or {}
@@ -944,7 +944,7 @@ def _read_stdin_payload():
 
     On native Windows the stdin handed to the hook can carry a UTF-8 BOM
     (EF BB BF). Plain text decoding leaves a leading U+FEFF that breaks
-    json.loads, which would make the hook fail-open (allow) on EVERY call — the
+    json.loads, which would make the hook fail-open (allow) on EVERY call, the
     worst failure mode for a security tool. Reading raw bytes and decoding with
     utf-8-sig strips the BOM. Returns the parsed dict, or None if stdin is
     genuinely not JSON (caller fails open in that case).
@@ -966,7 +966,7 @@ def _read_stdin_payload():
 def main():
     payload = _read_stdin_payload()
     if payload is None:
-        # stdin is genuinely not JSON — err on the side of allowing, exit
+        # stdin is genuinely not JSON, err on the side of allowing, exit
         # silently (no stdout = implicit allow under the v2.1+ schema).
         return
 
@@ -1022,7 +1022,7 @@ def main():
         }))
         return
 
-    # Only flagged calls (deny/ask/warn) reach here — record for the statusbar.
+    # Only flagged calls (deny/ask/warn) reach here, record for the statusbar.
     record_event(payload, decision, category, entity=entity)
 
     tool_name = payload.get("tool_name") or payload.get("tool", "<unknown>")

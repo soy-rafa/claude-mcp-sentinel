@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-MCP Sentinel — red-team harness.
+MCP Sentinel: red-team harness.
 
 Runs a battery of INERT malicious-skill scenarios (what a malicious skill WOULD
-do, as data — nothing executes) through every Sentinel layer and reports which
+do, as data, nothing executes) through every Sentinel layer and reports which
 are caught and which slip through. A MISS on an attack scenario, or a false
 positive on a benign one, is a bug to fix.
 
-Scenarios: tests/fixtures/redteam_scenarios.json — a list of objects with any of:
+Scenarios: tests/fixtures/redteam_scenarios.json: a list of objects with any of:
   - tool_calls: [{tool_name, tool_input}]   -> PreToolUse decide() + attack-chain
   - mcp_spec:   {name, command, args, url, env, description} -> config_scan
   - skill_doc:  "<SKILL.md/CLAUDE.md text>" -> injection scan

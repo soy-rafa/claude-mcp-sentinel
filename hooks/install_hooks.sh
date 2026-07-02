@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# MCP Sentinel — install runtime protection hooks.
+# MCP Sentinel: install runtime protection hooks.
 #
 # Registers two hooks in Claude Code:
 #   - sentinel_preflight.py  as PreToolUse  (allow / deny / ask before a call)
@@ -77,7 +77,7 @@ POST_COMMAND="python3 \"$POST_PATH\""
 SCAN_COMMAND="python3 \"$SCAN_PATH\" --session"
 
 # Add or replace all three hooks. Any existing non-Sentinel hooks (e.g. gitnexus)
-# are preserved — we only drop prior entries whose command matches ours.
+# are preserved, we only drop prior entries whose command matches ours.
 TMP="$(mktemp)"
 jq --arg pre "$PRE_COMMAND" --arg post "$POST_COMMAND" --arg scan "$SCAN_COMMAND" '
   .hooks //= {}

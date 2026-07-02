@@ -1,4 +1,4 @@
-# Threat Intelligence Sources — Reference Guide
+# Threat Intelligence Sources: Reference Guide
 
 This document contains detailed information about each threat source MCP Sentinel uses.
 Read this when you need deeper context about a source or when troubleshooting search results.
@@ -20,7 +20,7 @@ Read this when you need deeper context about a source or when troubleshooting se
 
 **URL**: https://github.com/advisories
 **Type**: Formal CVE database
-**Reliability**: Very high — peer-reviewed, linked to NVD
+**Reliability**: Very high (peer-reviewed, linked to NVD)
 **Search strategy**:
 - Search by package name: `[package] type:reviewed`
 - Search by ecosystem: filter by npm, pip, etc.
@@ -32,19 +32,19 @@ Read this when you need deeper context about a source or when troubleshooting se
 
 **URL**: https://vulnerablemcp.info
 **Type**: Dedicated MCP vulnerability tracker
-**Reliability**: High — specialized, community-maintained
+**Reliability**: High (specialized, community-maintained)
 **Search strategy**:
 - Direct search on site for MCP server names
 - Check their API if available for bulk queries
 **What you'll find**: MCP-specific CVEs, risk assessments, remediation guides
 **Update frequency**: Weekly+
-**Note**: This is one of the most targeted sources — always check here first for MCP-specific issues.
+**Note**: This is one of the most targeted sources, always check here first for MCP-specific issues.
 
 ## 3. MCPScan.ai
 
 **URL**: https://mcpscan.ai
 **Type**: Automated MCP security scanner
-**Reliability**: High — automated analysis
+**Reliability**: High (automated analysis)
 **Search strategy**:
 - Search by MCP server name or GitHub URL
 - Look for scan reports and risk scores
@@ -55,7 +55,7 @@ Read this when you need deeper context about a source or when troubleshooting se
 
 **URL**: https://snyk.io
 **Type**: Enterprise security research
-**Reliability**: Very high — professional security research
+**Reliability**: Very high (professional security research)
 **Key research**: "ToxicSkills" study identified 1,467 malicious ClawHub skills
 **Search strategy**:
 - `site:snyk.io toxicskills`
@@ -67,7 +67,7 @@ Read this when you need deeper context about a source or when troubleshooting se
 
 **URL**: https://openclaw.ai (ClawHub is the marketplace)
 **Type**: Skill registry with security scanning
-**Reliability**: Medium-high — has VirusTotal integration but is community-submitted
+**Reliability**: Medium-high (has VirusTotal integration but is community-submitted)
 **Search strategy**:
 - Check if the skill exists on ClawHub
 - Look for VirusTotal scan results and community ratings
@@ -101,7 +101,7 @@ the user context about what class of attack it belongs to.
 
 **URL**: https://reddit.com/r/ClaudeAI
 **Type**: Community early warning
-**Reliability**: Variable — good for first alerts, needs verification
+**Reliability**: Variable (good for first alerts, needs verification)
 **Search strategy**:
 - `site:reddit.com/r/ClaudeAI [skill-name] security`
 - `site:reddit.com/r/ClaudeAI MCP vulnerability`
@@ -114,7 +114,7 @@ might be a misconfiguration, not a vulnerability. Always verify.
 ## 8. Anthropic Discord
 
 **Type**: Community early warning
-**Reliability**: Medium-high — developers and Anthropic staff participate
+**Reliability**: Medium-high (developers and Anthropic staff participate)
 **Channels**: #mcp, #claude-code
 **Note**: Discord content is not easily searchable via web. Look for references to
 Discord discussions in Reddit posts or GitHub issues instead. If the user has Discord
@@ -123,8 +123,8 @@ access, suggest they check these channels directly for real-time alerts.
 ## 9. GitHub Issues on MCP repos
 
 **Key repos to monitor**:
-- `modelcontextprotocol/servers` — official MCP server implementations
-- `modelcontextprotocol/specification` — protocol spec issues
+- `modelcontextprotocol/servers`: official MCP server implementations
+- `modelcontextprotocol/specification`: protocol spec issues
 - Individual MCP server repos (check Issues tab, filter by `security` label)
 
 **Search strategy**:

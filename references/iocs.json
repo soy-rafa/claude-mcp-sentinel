@@ -38,7 +38,7 @@
   },
 
   "sensitive_env_vars": {
-    "description": "Environment variables commonly containing secrets. Flagged ONLY when a command dereferences one (or dumps env) AND pipes/sends it to a network egress tool — mention alone is not flagged.",
+    "description": "Environment variables commonly containing secrets. Flagged ONLY when a command dereferences one (or dumps env) AND pipes/sends it to a network egress tool, mention alone is not flagged.",
     "patterns": [
       "AWS_SECRET_ACCESS_KEY",
       "AWS_SESSION_TOKEN",

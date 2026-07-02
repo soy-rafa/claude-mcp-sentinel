@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MCP Sentinel — PostToolUse hook ("remember on approve").
+MCP Sentinel: PostToolUse hook ("remember on approve").
 
 Runs AFTER a tool call has executed. Claude Code only fires PostToolUse when the
 call actually ran, which means the user approved it at the native permission
@@ -56,7 +56,7 @@ def allowlist_write_target():
 
     Honours SENTINEL_ALLOWLIST_PATH (used by tests and non-standard setups);
     otherwise the global ~/.claude/sentinel-allowlist.json. We never write to a
-    project-local .security/ file implicitly — auto-trust goes to one known place.
+    project-local .security/ file implicitly: auto-trust goes to one known place.
     """
     override = os.environ.get("SENTINEL_ALLOWLIST_PATH")
     if override:

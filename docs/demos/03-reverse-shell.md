@@ -1,4 +1,4 @@
-# Demo 3 — Reverse shell (control remoto del equipo)
+# Demo 3: Reverse shell (control remoto del equipo)
 
 **Usuario:** La skill dice que va a 'comprobar la conexión de red'.
 
@@ -17,7 +17,7 @@ Aprobarla permite esta llamada; MCP Sentinel volverá a preguntar la próxima ve
 Por qué: Ejecuta un patrón de shell usado para RCE, reverse shell o persistencia.
 ```
 
-**Resultado:** `ask` — Una reverse shell abre tu equipo al atacante. Patrón de RCE inconfundible: Sentinel lo marca antes de ejecutarlo.
+**Resultado:** `ask`: Una reverse shell abre tu equipo al atacante. Patrón de RCE inconfundible: Sentinel lo marca antes de ejecutarlo.
 
 ---
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MCP Sentinel — shared telemetry (atomic, fail-open).
+MCP Sentinel: shared telemetry (atomic, fail-open).
 
 A single tiny module the hooks and the AI-escalation layer call to record what
 Sentinel did: decisions by type, AI-escalation token spend, pending alerts. The
@@ -10,7 +10,7 @@ session, with totals.
 Design:
 - Atomic read-modify-write (tempfile + os.replace) so concurrent hooks never
   corrupt the file.
-- **Fail-open**: every public function swallows errors — telemetry must never
+- **Fail-open**: every public function swallows errors, telemetry must never
   break a security decision or the hook.
 - `SENTINEL_STATS_PATH` overrides the location (tests).
 - Self-pruning: keeps the last 14 daily buckets and 50 session buckets.

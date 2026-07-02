@@ -1,4 +1,4 @@
-# Release notes — next GitHub version (draft)
+# Release notes: next GitHub version (draft)
 
 Running list of what's new since the last published release (**2.0.0**). Update
 this as features land; it becomes the GitHub release description when we publish.
@@ -10,12 +10,12 @@ Full detail per version lives in `CHANGELOG.md`.
 
 ### Red-team hardening + two real-world attack batteries (3.1.0)
 - Sentinel was attacked by **two batteries of inert "malicious skill" scenarios**
-  (nothing executes — they are data describing what an attack WOULD do): one
+  (nothing executes, they are data describing what an attack WOULD do): one
   adversarially-designed (39), one recreating **real documented incidents**
   (Postmark MCP backdoor, tool poisoning / line jumping, credential exfil,
   persistence & RCE via config, supply-chain: typosquat MCP, `*_BASE_URL` LLM-traffic
   hijack, trojaned postinstall). The default `redteam_check.py` runner aggregates
-  all batteries: **69 attacks, 0 missed, 0 false positives** — each caught by the
+  all batteries: **69 attacks, 0 missed, 0 false positives**, each caught by the
   exact layer it should be.
 - First battery found and closed **7 gaps**: malicious-config scanner
   (`scan_config_text`: cloud-metadata/IMDS, raw public IP, `*_BASE_URL` override,
@@ -29,14 +29,14 @@ Full detail per version lives in `CHANGELOG.md`.
   payload from being upgraded to `allow` (caps at `ask`).
 - Test hygiene: the suite no longer pollutes real telemetry (isolated stats/state).
 
-### Autonomous v3.0 build — intelligence, visibility, deeper detection (3.0.0)
+### Autonomous v3.0 build: intelligence, visibility, deeper detection (3.0.0)
 - **Optional AI escalation** (`sentinel_ai.py`, `SENTINEL_AI=on`): off by default,
   never on the allow hot-path, only for ambiguous `ask` cases. Daily token budget,
   3s timeout, fail-open to the local decision. Every escalation's tokens are logged.
 - **Telemetry** (`sentinel_stats.py`) + a **statusbar segment** showing what Sentinel
   did and the tokens it spent (transparency).
 - **Forensic quarantine** (`sentinel_quarantine.py`, redacted holds),
-  **attack-chain / trajectory** detection (credential access → network egress),
+  **attack-chain / trajectory** detection (credential access, then network egress),
   **cross-server data-flow** (`sentinel_dataflow.py`: a secret out of server A into
   server B), PowerShell parity in the dangerous-command signatures.
 - Full **AV-safe at rest**: `tools/vault.py` + base64 IOC library (`iocs.b64`), zero
@@ -64,7 +64,7 @@ Full detail per version lives in `CHANGELOG.md`.
   filenames, cloud IMDS, persistence/config writes, more reverse shells.
 
 ### Antivirus-safe distribution (2.6.0)
-- A security tool ships threat indicators by design — so they are **base64 at
+- A security tool ships threat indicators by design, so they are **base64 at
   rest**: the ~400-domain malware feed (`blocklist-feed.b64`) and the attack
   test fixtures. No plaintext malware strings in the repo.
 - `ANTIVIRUS.md`: why it happens, exclusion steps, FP-reporting portals.
@@ -73,14 +73,14 @@ Full detail per version lives in `CHANGELOG.md`.
 
 
 ### Native-Windows fixes (2.5.0)
-- Fixed a **fail-open on a UTF-8 BOM in stdin** — on Windows the hook was silently
+- Fixed a **fail-open on a UTF-8 BOM in stdin**: on Windows the hook was silently
   allowing every call. Now decodes with `utf-8-sig` (both hooks).
-- Fixed **sensitive-path matching on native Windows** — backslash paths like
+- Fixed **sensitive-path matching on native Windows**: backslash paths like
   `C:\Users\me\.ssh\id_rsa` now match the Unix-style IOC patterns via path
   normalisation. Credential-path protection finally works on Windows.
 - Test runner is cross-platform (`sys.executable`), plus BOM/Windows regressions.
 - Found and reported by a community tester on native Windows (not WSL). **Credit
-  handle: TBD — fill before publishing.**
+  handle: TBD, fill before publishing.**
 
 ### Ask instead of block, with trust that persists (2.2.0)
 - The runtime hook no longer hard-blocks every suspicious call. Heuristic
@@ -110,23 +110,23 @@ Full detail per version lives in `CHANGELOG.md`.
   (`hookSpecificOutput.permissionDecision`); regression suite green.
 
 ## New / changed files since 2.0.0
-- `hooks/sentinel_postflight.py` (new) — remember-on-approve.
-- `hooks/sentinel_ai.py` (new) — optional AI escalation (opt-in, budgeted, hardened
+- `hooks/sentinel_postflight.py` (new): remember-on-approve.
+- `hooks/sentinel_ai.py` (new): optional AI escalation (opt-in, budgeted, hardened
   against prompt injection).
-- `hooks/sentinel_stats.py` (new) — telemetry; feeds the statusbar.
-- `hooks/sentinel_quarantine.py` (new) — forensic redacted holds.
-- `hooks/sentinel_dataflow.py` (new) — cross-server data-flow detection.
-- `tools/update_blocklist.py` (new) — blocklist feed updater.
-- `tools/config_scan.py` (new) — config/MCP scanner + integrity baseline.
-- `tools/vault.py` (new) — base64 at-rest encode/decode for threat data.
-- `references/blocklist-feed.b64`, `references/iocs.b64` (generated, base64) — AV-safe.
-- `hooks/sentinel_preflight.py` — ask decision, feed matching, i18n, shadow mode,
+- `hooks/sentinel_stats.py` (new): telemetry; feeds the statusbar.
+- `hooks/sentinel_quarantine.py` (new): forensic redacted holds.
+- `hooks/sentinel_dataflow.py` (new): cross-server data-flow detection.
+- `tools/update_blocklist.py` (new): blocklist feed updater.
+- `tools/config_scan.py` (new): config/MCP scanner + integrity baseline.
+- `tools/vault.py` (new): base64 at-rest encode/decode for threat data.
+- `references/blocklist-feed.b64`, `references/iocs.b64` (generated, base64): AV-safe.
+- `hooks/sentinel_preflight.py`: ask decision, feed matching, i18n, shadow mode,
   attack-chain, AI-escalation wiring.
-- `hooks/install_hooks.sh` / `uninstall_hooks.sh` — register/remove Pre+Post+SessionStart.
-- `tests/test_hook.py` — 90 cases; `tests/precision_check.py` (FP gate);
+- `hooks/install_hooks.sh` / `uninstall_hooks.sh`: register/remove Pre+Post+SessionStart.
+- `tests/test_hook.py`: 90 cases; `tests/precision_check.py` (FP gate);
   `tests/redteam_check.py` + `tests/fixtures/redteam_scenarios*.json` (two batteries).
-- `docs/reel-guion-v3.md` (new) — audience reel script.
-- `SKILL.md`, `hooks/README.md`, `CHANGELOG.md`, `RED-TEAM-LOG.md`, `ANTIVIRUS.md` — updated.
+- `docs/reel-guion-v3.md` (new): audience reel script.
+- `SKILL.md`, `hooks/README.md`, `CHANGELOG.md`, `RED-TEAM-LOG.md`, `ANTIVIRUS.md`: updated.
 
 ## Proposed follow-ups (from the Windows report, not yet done)
 - **Cross-platform installer.** `install_hooks.sh` is bash + `jq` + `python3`,
@@ -152,9 +152,9 @@ Full detail per version lives in `CHANGELOG.md`.
 - [ ] Decide whether to ship the feed snapshot in the repo or generate on install.
 - [ ] Document the optional daily cron for the updater in the README install steps.
 - [ ] Version in `SKILL.md` is `3.1.0`; tag the release.
-- [ ] **Privacy/scope:** repo stays PRIVATE until Rafa OKs publishing — no new public
+- [ ] **Privacy/scope:** repo stays PRIVATE until Rafa OKs publishing, no new public
       branch, no PR, no push without explicit approval.
-- [ ] Sanity note for contributors: the live hook screens your own edits — files
+- [ ] Sanity note for contributors: the live hook screens your own edits, files
       containing IOC strings (test fixtures, the curated domain) will be denied/
       asked while editing. Disable the Sentinel hooks during development and
       reinstall when done (see the project memory / hooks/README). When authoring

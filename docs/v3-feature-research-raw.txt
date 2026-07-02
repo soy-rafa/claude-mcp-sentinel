@@ -231,7 +231,7 @@
         "layer": "ai-escalation",
         "needs_ai": true,
         "inspired_by": "Kaspersky/Bitdefender behavioral heuristics; Trajectory Guard (seq-aware anomaly detection); agentjacking incident (2026)",
-        "fp_risk": "medium — el modelo podría flaggear actividades legítimas como anomalías (ej: bulk dataset processing). Mitiga: whitelist por patron, feedback loop post-approval.",
+        "fp_risk": "medium - el modelo podría flaggear actividades legítimas como anomalías (ej: bulk dataset processing). Mitiga: whitelist por patron, feedback loop post-approval.",
         "notes": "Económico: solo escalas casos no decidibles localmente (~10-15% de calls típicamente). Reporte de tokens en statusbar. Incluir fingerprint de modelo usado (\"Claude 3.5 Sonnet, X tokens\").",
         "source": "github.com/soy-rafa/claude-mcp-sentinel (directiva v3.0); agentjacking incident (2026); antivirus heuristics",
         "sources": [
@@ -240,7 +240,7 @@
             "url": "https://beam.ai/agentic-insights/ai-agent-security-breaches-2026-lessons"
           },
           {
-            "title": "Trajectory Guard — A Lightweight, Sequence-Aware Model for Real-Time Anomaly Detection in Agentic AI",
+            "title": "Trajectory Guard - A Lightweight, Sequence-Aware Model for Real-Time Anomaly Detection in Agentic AI",
             "url": "https://arxiv.org/pdf/2601.00516"
           },
           {
@@ -257,7 +257,7 @@
         "layer": "posttooluse",
         "needs_ai": false,
         "inspired_by": "Comodo antivirus quarantine; Kaspersky forensic hold; classical AV UI",
-        "fp_risk": "low — es post-facto, solo storage. Riesgo: revelación de secrets en quarantine files; mitiga con redacción automática de patterns (AWS keys, etc).",
+        "fp_risk": "low - es post-facto, solo storage. Riesgo: revelación de secrets en quarantine files; mitiga con redacción automática de patterns (AWS keys, etc).",
         "notes": "Integrar con config_scan.py: baseline de quarantine + verificar integridad. No bloquea ejecución (es logging post-hecho). Incluir en stats de statusbar: \"3 quarantined\" si hay alertas.",
         "source": "github.com/soy-rafa/claude-mcp-sentinel (directiva v3.0: no bloquear flujo); antivirus patterns",
         "sources": [
@@ -279,7 +279,7 @@
         "layer": "scanner + config-integrity",
         "needs_ai": false,
         "inspired_by": "Norton/McAfee signature updates; Snyk ToxicSkills (1467 malicious payloads found); URLhaus live feed",
-        "fp_risk": "low — es detección basada en lista. Riesgo: lista desactualizada si sync falla; mitiga con fallback + logging.",
+        "fp_risk": "low - es detección basada en lista. Riesgo: lista desactualizada si sync falla; mitiga con fallback + logging.",
         "notes": "Deja las 3 últimas versiones de feeds. Hashing para verificar integridad en-flight. Endpoint: Snyk API (rate-limited community) + URLhaus public feed.",
         "source": "github.com/soy-rafa/claude-mcp-sentinel (IOC base + feed URLhaus); Snyk ToxicSkills study",
         "sources": [
@@ -301,7 +301,7 @@
         "layer": "statusbar",
         "needs_ai": false,
         "inspired_by": "ccusage, claude-code-usage-bar, leeguooooo/claude-code-usage-bar (9 themes, fast daemon)",
-        "fp_risk": "low — es UI pura. Riesgo: actualización lenta o lag visual; mitigar con buffer local.",
+        "fp_risk": "low - es UI pura. Riesgo: actualización lenta o lag visual; mitigar con buffer local.",
         "notes": "Lee tokens desde ~/.claude/sentinel/stats.json (escrito en cada escalación AI). No debe ejecutar Python en cada tick (eso mata perf). Script bash puro. Config en settings.json.",
         "source": "github.com/soy-rafa/claude-mcp-sentinel (directiva v3.0: integrar estado+tokens); Claude Code statusline docs",
         "sources": [
@@ -310,7 +310,7 @@
             "url": "https://code.claude.com/docs/en/statusline"
           },
           {
-            "title": "GitHub - leeguooooo/claude-code-usage-bar: Lightweight Claude Code statusLine: 5h/7d rate-limit usage, reset countdowns, model + context window, prompt-cache age — one line, 3 styles × 9 themes, daemon fast-mode",
+            "title": "GitHub - leeguooooo/claude-code-usage-bar: Lightweight Claude Code statusLine: 5h/7d rate-limit usage, reset countdowns, model + context window, prompt-cache age - one line, 3 styles × 9 themes, daemon fast-mode",
             "url": "https://github.com/leeguooooo/claude-code-usage-bar"
           }
         ]
@@ -323,7 +323,7 @@
         "layer": "pretooluse",
         "needs_ai": false,
         "inspired_by": "issue #5 (false positive: sentinel blocks file writes containing IOC strings in content)",
-        "fp_risk": "medium — al debilitar detección de IOCs en contenido, podrías perder alertas reales (ej: script que embebé credencial enofuscada). Mitiga: escalación AI para casos ambiguos.",
+        "fp_risk": "medium - al debilitar detección de IOCs en contenido, podrías perder alertas reales (ej: script que embebé credencial enofuscada). Mitiga: escalación AI para casos ambiguos.",
         "notes": "Preservar seguridad: bloquear si el IOC está en la ACCIÓN (ej: read ~/.ssh/id_rsa) pero solo warn si es contenido documentado. Añadir tests de regresión.",
         "source": "github.com/soy-rafa/claude-mcp-sentinel (issue #5)",
         "sources": [
@@ -341,7 +341,7 @@
         "layer": "config-integrity",
         "needs_ai": false,
         "inspired_by": "issue #9 (Windows 11 PowerShell solution); issue #3 (WSL incompatibility)",
-        "fp_risk": "low — es installer puro. Riesgo: schema version mismatch; mitiga con validación de respuesta post-install.",
+        "fp_risk": "low - es installer puro. Riesgo: schema version mismatch; mitiga con validación de respuesta post-install.",
         "notes": "Mantener un solo SKILL.md + config; generar scripts específicos por SO desde un template. CI/CD debe testear ambos.",
         "source": "github.com/soy-rafa/claude-mcp-sentinel (issues #9, #3, #1)",
         "sources": [
@@ -363,7 +363,7 @@
         "layer": "scanner",
         "needs_ai": false,
         "inspired_by": "issue #4 (hash collision in drift check); practical collision documented with 2+ examples",
-        "fp_risk": "very-low — es fix matemático puro. Sin FP, solo precisión gana.",
+        "fp_risk": "very-low - es fix matemático puro. Sin FP, solo precisión gana.",
         "notes": "Verificar backward compat: si existen baselines con hashes viejos, migrar o descartar con warning. Teste con 131+ skills en corpus.",
         "source": "github.com/soy-rafa/claude-mcp-sentinel (issue #4)",
         "sources": [
@@ -381,7 +381,7 @@
         "layer": "ai-escalation",
         "needs_ai": false,
         "inspired_by": "Claude Cost Tracking docs; antivirus cloud quotas; directiva v3.0 (económica)",
-        "fp_risk": "low — es cuota local. Riesgo: false alerts si budget es muy bajo; mitiga con defaults razonables (5K ~= 5 usd típicamente).",
+        "fp_risk": "low - es cuota local. Riesgo: false alerts si budget es muy bajo; mitiga con defaults razonables (5K ~= 5 usd típicamente).",
         "notes": "Budget configurable en settings. Reset diario o semanal. Logging en ~/.claude/sentinel/ai_spend.log.",
         "source": "github.com/soy-rafa/claude-mcp-sentinel (directiva v3.0); Claude Code cost tracking",
         "sources": [
@@ -403,7 +403,7 @@
         "layer": "pretooluse",
         "needs_ai": false,
         "inspired_by": "Windows Defender warnings; antivirus UX (prompt before risky action)",
-        "fp_risk": "low — es texto puro, sin decisión. Riesgo: warning fatigue; mitiga con pocos patrones críticos (no todo).",
+        "fp_risk": "low - es texto puro, sin decisión. Riesgo: warning fatigue; mitiga con pocos patrones críticos (no todo).",
         "notes": "Loguea warnings en ~/.claude/sentinel/hints.log. Solo en modo verbose o si configurable.",
         "source": "github.com/soy-rafa/claude-mcp-sentinel (directiva v3.0: no bloquear; IA + context); antivirus patterns",
         "sources": [
@@ -421,7 +421,7 @@
         "layer": "scanner + config-integrity",
         "needs_ai": false,
         "inspired_by": "Postmark MCP backdoor (malicious update); Snyk ToxicSkills (supply chain compromise); config_scan.py integrity baseline",
-        "fp_risk": "med — código legítimo se actualiza; baselines pueden desincronizarse. Mitiga: allowlist para updates conocidos, versioning de baselines.",
+        "fp_risk": "med - código legítimo se actualiza; baselines pueden desincronizarse. Mitiga: allowlist para updates conocidos, versioning de baselines.",
         "notes": "Integrar con dynamic IOC feed: si hash no cambió pero contenido sí (obfuscation), escalación AI.",
         "source": "github.com/soy-rafa/claude-mcp-sentinel (config_scan.py + watcher); Postmark incident; Snyk ToxicSkills",
         "sources": [
@@ -445,7 +445,7 @@
         "fp_risk": "medium",
         "inspired_by": "TraceAegis (arxiv 2510.11203), AgentTrust RiskChain, BountyBench framework",
         "source": "https://arxiv.org/pdf/2510.11203, https://arxiv.org/html/2605.04785v1",
-        "notes": "Requires storing tool call sequence history per session + deterministic state machine for chains (data_exfil: [fs_read, credential_access, network_send], privilege_esc: [info_gather, vuln_scan, exploit], etc.). Baseline on known patterns; optional ML escalation if anomaly score > threshold. False positive risk: legitimate workflows (backup scripts, audits) may trigger chains—mitigate with context (--safe-mode whitelist, directory scope).",
+        "notes": "Requires storing tool call sequence history per session + deterministic state machine for chains (data_exfil: [fs_read, credential_access, network_send], privilege_esc: [info_gather, vuln_scan, exploit], etc.). Baseline on known patterns; optional ML escalation if anomaly score > threshold. False positive risk: legitimate workflows (backup scripts, audits) may trigger chains-mitigate with context (--safe-mode whitelist, directory scope).",
         "sources": [
           {
             "title": "TraceAegis: Securing LLM-Based Agents via Hierarchical and Behavioral Anomaly Detection",
@@ -459,7 +459,7 @@
       },
       {
         "name": "LLM-powered Escalation for Ambiguous Actions (~5% of cases)",
-        "description": "For tool calls that the deterministic classifier (regex/rules) cannot confidently decide on (ambiguity score <0.8), escalate to Claude for judgment ONLY if explicitly enabled. Tracks token cost per escalation and reports in statusbar. Example: 'modify test file' is usually safe, but 'modify test file inside /etc' is not—LLM decides. Fallback to deny if LLM times out or if user disables AI mode.",
+        "description": "For tool calls that the deterministic classifier (regex/rules) cannot confidently decide on (ambiguity score <0.8), escalate to Claude for judgment ONLY if explicitly enabled. Tracks token cost per escalation and reports in statusbar. Example: 'modify test file' is usually safe, but 'modify test file inside /etc' is not-LLM decides. Fallback to deny if LLM times out or if user disables AI mode.",
         "value": "high",
         "effort": "M",
         "layer": "ai-escalation",
@@ -467,7 +467,7 @@
         "fp_risk": "low",
         "inspired_by": "Nah tool (HN #47343927), oversight fatigue calibration (arxiv 2606.08919)",
         "source": "https://news.ycombinator.com/item?id=47343927, https://arxiv.org/html/2606.08919v1",
-        "notes": "Directiva de Rafa: AI en bucle OPCIONAL, económica, reporte de tokens. Implementar: pre-compute ambiguity scores with deterministic classifier, store top-5 candidate actions, send only those to LLM with 200-token budget, track spent tokens per session in statusbar. NO pausar flujo—async decision queue, usuario puede ignorar o overrides.",
+        "notes": "Directiva de Rafa: AI en bucle OPCIONAL, económica, reporte de tokens. Implementar: pre-compute ambiguity scores with deterministic classifier, store top-5 candidate actions, send only those to LLM with 200-token budget, track spent tokens per session in statusbar. NO pausar flujo-async decision queue, usuario puede ignorar o overrides.",
         "sources": [
           {
             "title": "Show HN: A context-aware permission guard for Claude Code",
@@ -489,7 +489,7 @@
         "fp_risk": "low",
         "inspired_by": "MCPProxy quarantine, mcpserver-audit (GitHub CSA), Cisco mcp-scanner, malicious skills incident (HN #46827731)",
         "source": "https://mcpproxy.app/, https://github.com/ModelContextProtocol-Security/mcpserver-audit, https://github.com/cisco-ai-defense/mcp-scanner, https://news.ycombinator.com/item?id=46827731",
-        "notes": "Integrar con existing IOC base. Scan on ~/.claude/managed_settings.json change (watch file). Leverage YARA rules + pip-audit for CVEs + regex for creds (similar to urlhaus IOC feed format). Report: tool list + risk summary. Store results as metadata in managed_settings.json or new .sentinel/ directory. NO block new servers by default—flag and ask, let user decide.",
+        "notes": "Integrar con existing IOC base. Scan on ~/.claude/managed_settings.json change (watch file). Leverage YARA rules + pip-audit for CVEs + regex for creds (similar to urlhaus IOC feed format). Report: tool list + risk summary. Store results as metadata in managed_settings.json or new .sentinel/ directory. NO block new servers by default-flag and ask, let user decide.",
         "sources": [
           {
             "title": "MCPProxy - Smart MCP Proxy for AI Agents",
@@ -589,7 +589,7 @@
         "fp_risk": "very-low",
         "inspired_by": "Claude Code hooks audit logging pattern (docs), enterprise compliance requirements, post-incident forensics",
         "source": "https://code.claude.com/docs/en/hooks, https://www.truefoundry.com/blog/claude-enterprise-security",
-        "notes": "Structured JSON per line: {ts, tool_name, action (allow/deny/ask), reason, user_decision, ai_escalation_cost, file_path, diff_summary}. Rotate logs monthly; compress old logs. Provide CLI: `sentinel audit report [--since 7d] [--tool bash] > report.txt`. NO secrets in logs—redact auth headers, password patterns, API keys.",
+        "notes": "Structured JSON per line: {ts, tool_name, action (allow/deny/ask), reason, user_decision, ai_escalation_cost, file_path, diff_summary}. Rotate logs monthly; compress old logs. Provide CLI: `sentinel audit report [--since 7d] [--tool bash] > report.txt`. NO secrets in logs-redact auth headers, password patterns, API keys.",
         "sources": [
           {
             "title": "Hooks reference - Claude Code Docs",
@@ -698,7 +698,7 @@
         "inspired_by": "Microsoft Defender tamper protection (HKLM registry guard, TPExclusions), Norton 360 backup exclusions & restore (rollback to known-good state), config baseline model estándar en EDR",
         "needs_ai": false,
         "fp_risk": "Medium-Low. Cambios legítimos existen (usuario edita config); mitigación: aviso + re-firma del baseline al aprobar. Para curl|bash en hook: bajo FP.",
-        "notes": "Cierra laguna V3-C3/C4: CVE-2025-59536 ejecuta hook atacante en SessionStart ANTES del diálogo de confianza. LIMITACIÓN HONESTA: hay race condition — el watcher detecta RÁPIDO pero no previene perfectamente (prevención = fix del cliente). El corpus attack_corpus hoy solo cubre Claude escribiendo el hook, no clonación de repo con hook ya presente. Decisión crítica para Rafa: ¿aviso-only (warn) o bloqueante (deny) al detectar drift de hooks?",
+        "notes": "Cierra laguna V3-C3/C4: CVE-2025-59536 ejecuta hook atacante en SessionStart ANTES del diálogo de confianza. LIMITACIÓN HONESTA: hay race condition - el watcher detecta RÁPIDO pero no previene perfectamente (prevención = fix del cliente). El corpus attack_corpus hoy solo cubre Claude escribiendo el hook, no clonación de repo con hook ya presente. Decisión crítica para Rafa: ¿aviso-only (warn) o bloqueante (deny) al detectar drift de hooks?",
         "source": "V3-PROPOSAL.md (C3/C4/C8), Microsoft Learn (Tamper Protection), ANTIVIRUS.md (file-restoration model)",
         "sources": [
           {
@@ -942,7 +942,7 @@
         "needs_ai": false,
         "fp_risk": "none",
         "inspired_by": "ClamAV freshclam signature update tracking, Windows Security signature age",
-        "notes": "Read mtime from ~/.claude/sentinel-baseline.json (config-integrity watcher) and ~/.claude/sentinel-blocklist.json (feed URLhaus). Compute age in hours/days. Color: green <12h, yellow 12-24h, red >24h. Glyph: '🔄' or '📋'. Critical for v3: if baseline/feed is stale, config-integrity and feed blocklist checks lose reliability — surface this to user. <5ms check.",
+        "notes": "Read mtime from ~/.claude/sentinel-baseline.json (config-integrity watcher) and ~/.claude/sentinel-blocklist.json (feed URLhaus). Compute age in hours/days. Color: green <12h, yellow 12-24h, red >24h. Glyph: '🔄' or '📋'. Critical for v3: if baseline/feed is stale, config-integrity and feed blocklist checks lose reliability - surface this to user. <5ms check.",
         "source": "ClamAV freshclam documentation, Windows Security signature management",
         "sources": [
           {
@@ -1043,7 +1043,7 @@
         "needs_ai": true,
         "fp_risk": "none",
         "inspired_by": "OAuth consent prompt UI patterns, async operation status indicators",
-        "notes": "Only relevant if v3 implements optional AI-in-loop for ambiguous cases. Segment reads ~/.claude/sentinel-state.json key 'pending_escalations' (count of ask decisions waiting for LLM response). Yellow glyph '❓' when >0, green when 0. Non-blocking — user can continue working while AI evaluates. Transparency: shows Sentinel is thinking, not stalled.",
+        "notes": "Only relevant if v3 implements optional AI-in-loop for ambiguous cases. Segment reads ~/.claude/sentinel-state.json key 'pending_escalations' (count of ask decisions waiting for LLM response). Yellow glyph '❓' when >0, green when 0. Non-blocking - user can continue working while AI evaluates. Transparency: shows Sentinel is thinking, not stalled.",
         "source": "OAuth consent screen UI, async operation status patterns",
         "sources": [
           {
