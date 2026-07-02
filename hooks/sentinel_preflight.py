@@ -374,21 +374,41 @@ def check_cloud_metadata(tool_name, tool_input, iocs, allowlist):
     return (None, None, None, None)
 
 
+# A shell command that writes/moves/deletes/edits-in-place an agent-config or hook
+# file. The mutating op must point AT the file (so `cat settings.json` or reading it
+# with `jq ... > elsewhere` is not flagged), which keeps false positives near zero.
+# Closes the "disable Sentinel by rewriting settings.json from Bash" gap that the
+# Write/Edit target-path check below can't see.
+_CONFIG_TAMPER_RX = re.compile(
+    r"(?i)(>>?|\btee\b|\bmv\b|\bcp\b|\bln\b|\btruncate\b|\bsed\s+-i\S*|\brm\b)\s+[^\n|]*?"
+    r"(\.claude/settings(\.local)?\.json|\.claude\.json|\.mcp\.json|\.claude/hooks\b)"
+)
+
+
 def check_config_write(tool_name, tool_input, iocs, allowlist):
     """Writing/editing a persistence or agent-config file (settings.json hooks,
     shell rc, .mcp.json, authorized_keys...). The content is not scanned; the
-    target path is the signal."""
-    if tool_name not in ("Write", "Edit", "MultiEdit", "NotebookEdit"):
+    target path is the signal. Also catches shell commands that mutate the
+    agent-config/hook files (a way to disable Sentinel itself)."""
+    if tool_name in ("Write", "Edit", "MultiEdit", "NotebookEdit"):
+        pats = iocs.get("config_write_paths", {}).get("patterns", [])
+        allowed = allowlist.get("paths", []) + iocs.get("allowlist", {}).get("paths", [])
+        for t in target_paths(tool_input):
+            if is_allowlisted_path(t, allowed):
+                continue
+            tn = _norm_path(t)
+            for p in pats:
+                if p.lower() in tn:
+                    return (f"writes to a persistence/config file: {p}", "high", "config_write", None)
         return (None, None, None, None)
-    pats = iocs.get("config_write_paths", {}).get("patterns", [])
-    allowed = allowlist.get("paths", []) + iocs.get("allowlist", {}).get("paths", [])
-    for t in target_paths(tool_input):
-        if is_allowlisted_path(t, allowed):
-            continue
-        tn = _norm_path(t)
-        for p in pats:
-            if p.lower() in tn:
-                return (f"writes to a persistence/config file: {p}", "high", "config_write", None)
+
+    # Command-bearing tools (Bash, etc.): a shell rewrite/delete of the agent-config
+    # or hook files can silently disable Sentinel; the target-path check never sees it.
+    for c in command_strings(tool_input):
+        if _CONFIG_TAMPER_RX.search(c):
+            return ("shell command modifies an agent-config/hook file "
+                    "(settings.json/.mcp.json/.claude) — possible protection tamper",
+                    "high", "config_write", None)
     return (None, None, None, None)
 
 
