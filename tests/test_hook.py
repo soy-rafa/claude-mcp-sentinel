@@ -690,6 +690,34 @@ def main():
                          and foreign_kept
                          and _count(du, "PreToolUse", "sentinel_preflight.py") == 0))
 
+    # ---- ADAPTIVE TRUST: suggest from repeated asks (B) ---------------------
+    sug_state = Path(tmpdir) / "suggest-state"
+    os.environ["SENTINEL_STATE_DIR"] = str(sug_state)
+    os.environ["SENTINEL_STATS_PATH"] = str(Path(tmpdir) / "suggest-stats.json")
+    try:
+        pf.record_event({"session_id": "sug"}, "ask", "sensitive_path", entity="~/.config/app/creds")
+        pf.record_event({"session_id": "sug"}, "ask", "sensitive_path", entity="~/.config/app/creds")
+        pf.record_event({"session_id": "sug"}, "ask", "suspicious_network", entity="cdn.example.com")
+        pf.record_event({"session_id": "sug"}, "ask", "dangerous_command", entity=None)  # never suggested
+        st_sug = json.loads((sug_state / "sug.json").read_text())
+        sg_spec = importlib.util.spec_from_file_location(
+            "sentinel_suggest", HOOKS.parent / "tools" / "sentinel_suggest.py")
+        sg = importlib.util.module_from_spec(sg_spec)
+        sg_spec.loader.exec_module(sg)
+        agg = sg.aggregate()
+        os.environ["SENTINEL_ALLOWLIST_PATH"] = str(Path(tmpdir) / "suggest-allow.json")
+        sg.apply(list(agg.keys()))
+        al_after = json.loads(Path(os.environ["SENTINEL_ALLOWLIST_PATH"]).read_text())
+    finally:
+        for _k in ("SENTINEL_STATE_DIR", "SENTINEL_STATS_PATH", "SENTINEL_ALLOWLIST_PATH"):
+            os.environ.pop(_k, None)
+    results.append(check("suggest: repeated path/domain asks aggregate + apply to allowlist; commands excluded",
+                         st_sug.get("suggest", {}).get("sensitive_path|~/.config/app/creds") == 2
+                         and agg.get(("sensitive_path", "~/.config/app/creds")) == 2
+                         and "~/.config/app/creds" in al_after.get("paths", [])
+                         and "cdn.example.com" in al_after.get("domains", [])
+                         and not any("dangerous_command" in k for k in st_sug.get("suggest", {}))))
+
     # ---- QUARANTINE / FORENSIC HOLD -----------------------------------------
     q_spec = importlib.util.spec_from_file_location("sentinel_quarantine", HOOKS / "sentinel_quarantine.py")
     q = importlib.util.module_from_spec(q_spec)

@@ -856,7 +856,7 @@ def detect_attack_chain(events):
     return None
 
 
-def record_event(payload, decision, category, ai_tokens=0, would_block=False):
+def record_event(payload, decision, category, ai_tokens=0, would_block=False, entity=None):
     """Tally a flagged decision into the per-session state file that the statusbar
     and stats command read. Only deny/ask/warn are recorded (allow is the silent
     hot path, never touched). When would_block is set (audit-only/shadow mode), the
@@ -893,6 +893,14 @@ def record_event(payload, decision, category, ai_tokens=0, would_block=False):
         had_chain = bool(st.get("chain"))
         if chain:
             st["chain"] = chain
+        # Track auto-trustable entities (a concrete path/domain) so `sentinel
+        # suggest` can turn repeated asks into one-click allowlist entries — the
+        # ask-fatigue fix. Only path/domain categories; commands/env never suggested.
+        if entity and category in AUTO_REMEMBER_CATEGORIES:
+            sug = st.get("suggest") or {}
+            key = f"{category}|{entity}"
+            sug[key] = int(sug.get(key, 0)) + 1
+            st["suggest"] = sug
         tmp = p.with_suffix(".tmp")
         tmp.write_text(json.dumps(st))
         os.replace(tmp, p)
@@ -1001,7 +1009,7 @@ def main():
     # how Sentinel can run alongside autonomous work without ever stopping it
     # while still measuring how often it WOULD have intervened.
     if _shadow_enabled() and decision in ("deny", "ask"):
-        record_event(payload, decision, category, would_block=True)
+        record_event(payload, decision, category, would_block=True, entity=entity)
         tool_name = payload.get("tool_name") or payload.get("tool", "<unknown>")
         lang = detect_language(payload)
         message = render("shadow", lang, tool=tool_name, reason=reason, decision=decision)
@@ -1015,7 +1023,7 @@ def main():
         return
 
     # Only flagged calls (deny/ask/warn) reach here — record for the statusbar.
-    record_event(payload, decision, category)
+    record_event(payload, decision, category, entity=entity)
 
     tool_name = payload.get("tool_name") or payload.get("tool", "<unknown>")
     lang = detect_language(payload)
