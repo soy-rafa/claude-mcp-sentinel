@@ -370,6 +370,63 @@ def run_scan():
     return findings
 
 
+_DOC_EXT = {".md", ".mdx", ".txt", ".rst"}
+_SCRIPT_EXT = {".sh", ".bash", ".zsh", ".py", ".js", ".mjs", ".cjs", ".ts", ".rb", ".pl", ".ps1"}
+_SCAN_MAX_FILE = 512 * 1024
+
+
+def scan_path(target):
+    """Vet a skill/MCP directory (or file) BEFORE trusting/installing it. Static,
+    zero-token: reuses the same detectors as the runtime hook. Returns
+    {findings: [(kind, path, detail)], score, verdict}. Intentionally cautious —
+    a pre-install vet should over-flag rather than miss."""
+    target = Path(target).expanduser()
+    findings = []
+    if target.is_file():
+        files = [target]
+    elif target.is_dir():
+        files = [p for p in target.rglob("*") if p.is_file()]
+    else:
+        return {"findings": [], "score": 0, "verdict": "LOW", "error": f"not found: {target}"}
+
+    for f in files:
+        try:
+            if f.stat().st_size > _SCAN_MAX_FILE:
+                continue
+            text = f.read_text(errors="replace")
+        except Exception:
+            continue
+        ext = f.suffix.lower()
+        name = f.name.lower()
+        rel = str(f)
+        if ext in _DOC_EXT or name in ("skill.md", "claude.md", "readme.md"):
+            for rx in scan_injection(text):
+                findings.append(("injection", rel, f"prompt-injection phrase /{rx}/"))
+            for hit in scan_config_text(text):
+                findings.append(("config", rel, hit))
+        if ext == ".json":
+            for hit in scan_config_text(text):
+                findings.append(("config", rel, hit))
+            try:
+                data = json.loads(text)
+                servers = (data.get("mcpServers") or data.get("mcp_servers") or {}) if isinstance(data, dict) else {}
+                for sname, spec in (servers.items() if isinstance(servers, dict) else []):
+                    if isinstance(spec, dict):
+                        for hit in scan_server_spec(sname, spec):
+                            findings.append(("mcp", rel, f"{sname}: {hit}"))
+            except Exception:
+                pass
+        if ext in _SCRIPT_EXT:
+            hit = scan_command(text)
+            if hit:
+                findings.append(("command", rel, hit))
+
+    weight = {"injection": 3, "command": 3, "mcp": 2, "config": 2}
+    score = sum(weight.get(k, 1) for k, _r, _m in findings)
+    verdict = "LOW" if score == 0 else "MEDIUM" if score <= 3 else "HIGH" if score <= 8 else "CRITICAL"
+    return {"findings": findings, "score": score, "verdict": verdict}
+
+
 def session_alarm(findings):
     """A prominent alarm if integrity drift indicates Sentinel's OWN protection may
     have been removed or altered (the self-disable case surfaced by diff_baseline).
@@ -386,7 +443,24 @@ def main(argv=None):
     ap.add_argument("--baseline", action="store_true", help="(re)establish the trusted baseline")
     ap.add_argument("--json", action="store_true", help="machine-readable output")
     ap.add_argument("--session", action="store_true", help="brief non-blocking output for SessionStart")
+    ap.add_argument("--scan-path", metavar="DIR", help="vet a skill/MCP directory or file before trusting it")
     args = ap.parse_args(argv)
+
+    if args.scan_path:
+        r = scan_path(args.scan_path)
+        if r.get("error"):
+            print(f"⚠️  {r['error']}", file=sys.stderr)
+            return 2
+        if args.json:
+            print(json.dumps(r, indent=2))
+            return 0
+        print(f"🛡️ MCP Sentinel pre-install scan: {args.scan_path}")
+        print(f"   Risk: {r['verdict']} (score {r['score']}, {len(r['findings'])} finding(s))")
+        for kind, rel, detail in r["findings"]:
+            print(f"   [{kind}] {rel}: {detail}")
+        if not r["findings"]:
+            print("   No suspicious patterns found. Still review the code yourself before trusting it.")
+        return 0 if r["verdict"] in ("LOW", "MEDIUM") else 1
 
     if pf is None:
         print("⚠️  MCP Sentinel: could not load detection engine; config scan skipped.", file=sys.stderr)
