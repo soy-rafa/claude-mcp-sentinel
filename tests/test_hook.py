@@ -584,6 +584,22 @@ def main():
                          summ["today"].get("ask") == 3 and summ["today"].get("deny") == 1
                          and summ["totals"].get("ai_out") == 50 and sp.exists()))
 
+    # ---- STATUS COMMAND (U1) ------------------------------------------------
+    st_spec = importlib.util.spec_from_file_location("sentinel_status", HOOKS.parent / "tools" / "sentinel_status.py")
+    st = importlib.util.module_from_spec(st_spec)
+    st_spec.loader.exec_module(st)
+    rep = st.build_report()
+    results.append(check("status: report renders all key sections without crashing",
+                         all(s in rep for s in ("MCP Sentinel", "Protection hooks", "Signature base",
+                                                "Mode:", "AI escalation", "Telemetry", "Config knobs"))))
+    os.environ["SENTINEL_SHADOW"] = "on"
+    try:
+        rep_shadow = st.build_report()
+    finally:
+        os.environ.pop("SENTINEL_SHADOW", None)
+    results.append(check("status: reflects shadow mode when SENTINEL_SHADOW=on",
+                         "SHADOW" in rep_shadow))
+
     # ---- QUARANTINE / FORENSIC HOLD -----------------------------------------
     q_spec = importlib.util.spec_from_file_location("sentinel_quarantine", HOOKS / "sentinel_quarantine.py")
     q = importlib.util.module_from_spec(q_spec)
