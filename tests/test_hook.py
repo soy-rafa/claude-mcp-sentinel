@@ -485,6 +485,11 @@ def main():
                          any("NEW hook" in d for d in cs.diff_baseline(s2, s1))))
     results.append(check("config-scan: integrity drift detects a REMOVED hook (self-disable attempt)",
                          any("REMOVED hook" in d for d in cs.diff_baseline(s1, s2))))
+    _selftamper = {"drift": ["REMOVED hook — SENTINEL PROTECTION MAY BE DISABLED: "
+                             "PreToolUse:python3 sentinel_preflight.py"], "commands": [], "injection": []}
+    results.append(check("config-scan: self-tamper drift raises a prominent PROTECTION-DISABLED alarm (P3)",
+                         (cs.session_alarm(_selftamper) or "").find("PROTECTION MAY BE DISABLED") >= 0
+                         and cs.session_alarm({"drift": ["NEW hook: x"]}) is None))
     results.append(check("config-scan: SHA-256 hash is full 64 chars (no collision shortcut)",
                          len(cs._sha("x")) == 64))
     results.append(check("config-scan: stale (16-char) baseline triggers re-baseline, not false drift",

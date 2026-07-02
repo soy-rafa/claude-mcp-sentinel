@@ -370,6 +370,17 @@ def run_scan():
     return findings
 
 
+def session_alarm(findings):
+    """A prominent alarm if integrity drift indicates Sentinel's OWN protection may
+    have been removed or altered (the self-disable case surfaced by diff_baseline).
+    Returned separately so it is never buried in a generic finding count."""
+    for d in findings.get("drift", []) or []:
+        if "SENTINEL PROTECTION" in d:
+            return ("🚨 MCP Sentinel: PROTECTION MAY BE DISABLED — " + d
+                    + f"\n   Reinstall with: python3 {ROOT / 'hooks' / 'install_hooks.py'}")
+    return None
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="MCP Sentinel config/MCP scanner + integrity watcher.")
     ap.add_argument("--baseline", action="store_true", help="(re)establish the trusted baseline")
@@ -398,6 +409,9 @@ def main(argv=None):
         return 0
 
     if args.session:
+        alarm = session_alarm(findings)
+        if alarm:
+            print(alarm)
         if total:
             print(f"🛡️ MCP Sentinel: {total} config/MCP finding(s). Run "
                   f"`python3 {Path(__file__)} ` to review (hooks/MCP servers/drift).")
@@ -409,6 +423,9 @@ def main(argv=None):
             print("   (No integrity baseline yet — run with --baseline to establish one.)")
         return 0
 
+    alarm = session_alarm(findings)
+    if alarm:
+        print(alarm + "\n")
     print(f"🛡️ MCP Sentinel config scan: {total} finding(s)\n")
     if findings["commands"]:
         print("Dangerous hook / MCP commands:")

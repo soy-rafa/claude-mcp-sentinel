@@ -20,9 +20,24 @@ Auditoría v3.1.0 (`docs/AUDIT-v3.md`, lente usabilidad + protección). Cerrados
 - **Usabilidad (U2):** la descripción de `SKILL.md` ya describe la v3 (modelo ask, IA
   opcional, modo sombra, attack-chain, dataflow, integridad, AV-safe), no la v2.
 
-Pendiente de la auditoría (siguiente tanda): comando `sentinel status` (U1), cerrar
-auto-desactivación por shell (P2), integridad periódica/bloqueante (P3), instalador
-multiplataforma (U3). Suite 93/93, precisión FP=0/91, red-team 69/0/0.
+Segunda tanda (esfuerzo M) cerrada también:
+- **P2 — auto-desactivación por shell:** `check_config_write` ahora escanea comandos;
+  un `Bash` que escribe/mueve/borra/edita-in-place `settings.json`/`.mcp.json`/`.claude`
+  (con el verbo apuntando al fichero) se marca como posible tamper de la protección. Las
+  lecturas (`cat`, `jq` a otro destino) no se marcan (0 FP).
+- **U1 — comando de estado:** `tools/sentinel_status.py` muestra en un solo sitio hooks
+  registrados, base de firmas, feed, baseline, modo (normal/sombra), IA on/off +
+  presupuesto, telemetría, allowlist y las variables `SENTINEL_*` con cómo tocarlas.
+- **P6 — paridad Windows:** patrones de credenciales AWS con cualquier separador y rutas
+  con variables de entorno Windows (`%USERPROFILE%`/`%APPDATA%`…) hacia claves/creds.
+- **U3 — instalador multiplataforma:** `hooks/install_hooks.py` (solo stdlib, sin bash/jq),
+  idempotente, preserva hooks ajenos, `--uninstall`. Cubre Windows nativo.
+- **P3 — alarma de auto-tamper prominente:** el escaneo de SessionStart y el informe
+  destacan "PROTECCIÓN POSIBLEMENTE DESACTIVADA" si el propio hook de Sentinel
+  desaparece/cambia (se apoya en P1). La detección en tiempo real del intento la da P2;
+  el modo bloqueante (cambiar el contrato fail-open) queda como decisión abierta de Rafa.
+
+Suite 106/106, precisión FP=0/91, red-team 69/0/0.
 
 ## [3.1.0] - 2026-06-29 — endurecimiento red-team
 
