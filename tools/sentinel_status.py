@@ -9,6 +9,7 @@ section prints a dash, never crashes the report).
 Run:  python3 tools/sentinel_status.py
 """
 
+import argparse
 import os
 import sys
 from datetime import datetime, timezone
@@ -125,8 +126,44 @@ def build_report():
     return "\n".join(lines)
 
 
-def main():
-    print(build_report())
+def build_digest():
+    """Plain-language summary of what Sentinel has done. Zero-token (reads local
+    telemetry). Turns invisible protection into something a user can see valued."""
+    lines = ["🛡️  MCP Sentinel — digest", ""]
+    try:
+        import sentinel_stats as ss
+        tot = ss.summary().get("totals", {})
+        asked, denied, warned = tot.get("ask", 0), tot.get("deny", 0), tot.get("warn", 0)
+        would = tot.get("would_block", 0)
+        esc = tot.get("escalated", 0)
+        aitok = tot.get("ai_in", 0) + tot.get("ai_out", 0)
+        lines.append(f"Sentinel has flagged {asked + denied + warned} tool call(s): "
+                     f"{denied} blocked, {asked} handed to you to decide, {warned} allowed with a warning.")
+        if would:
+            lines.append(f"In shadow mode it would have stopped {would} more without interrupting you.")
+        if esc:
+            lines.append(f"It escalated {esc} ambiguous case(s) to the AI layer ({aitok} tokens total).")
+        else:
+            lines.append("The AI layer was never used (0 tokens) — the local engine handled everything.")
+    except Exception:
+        lines.append("(telemetry unavailable)")
+    try:
+        import sentinel_suggest as sg
+        repeat = [(k, n) for k, n in sg.aggregate().items() if n >= 2]
+        if repeat:
+            lines.append(f"{len(repeat)} path(s)/domain(s) keep coming up — run "
+                         "`python3 tools/sentinel_suggest.py` to trust them and cut the asks.")
+    except Exception:
+        pass
+    return "\n".join(lines)
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description="MCP Sentinel status / digest.")
+    ap.add_argument("--digest", action="store_true",
+                    help="plain-language summary of what Sentinel has done")
+    args = ap.parse_args(argv)
+    print(build_digest() if args.digest else build_report())
     return 0
 
 

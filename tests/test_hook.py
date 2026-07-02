@@ -675,6 +675,9 @@ def main():
         os.environ.pop("SENTINEL_SHADOW", None)
     results.append(check("status: reflects shadow mode when SENTINEL_SHADOW=on",
                          "SHADOW" in rep_shadow))
+    dig = st.build_digest()
+    results.append(check("digest: plain-language summary renders without crashing",
+                         "MCP Sentinel" in dig and ("flagged" in dig or "AI layer" in dig)))
 
     # ---- CROSS-PLATFORM INSTALLER (U3) --------------------------------------
     ih_spec = importlib.util.spec_from_file_location("install_hooks", HOOKS / "install_hooks.py")
