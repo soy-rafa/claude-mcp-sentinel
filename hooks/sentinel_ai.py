@@ -158,12 +158,20 @@ def _call_api(prompt, model, key, timeout):
         "max_tokens": 60,
         "messages": [{"role": "user", "content": prompt}],
     }).encode()
+    # SENTINEL_AI_ENDPOINT lets privacy-strict users point the AI layer at a local
+    # or self-hosted Anthropic-compatible endpoint, so nothing leaves the machine.
+    endpoint = os.environ.get("SENTINEL_AI_ENDPOINT", "https://api.anthropic.com/v1/messages")
     req = urllib.request.Request(
-        "https://api.anthropic.com/v1/messages", data=body,
+        endpoint, data=body,
         headers={"x-api-key": key, "anthropic-version": "2023-06-01",
                  "content-type": "application/json"})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read().decode())
+
+
+def endpoint():
+    """The AI-layer endpoint (default: Anthropic). Overridable for local models."""
+    return os.environ.get("SENTINEL_AI_ENDPOINT", "https://api.anthropic.com/v1/messages")
 
 
 def _parse_verdict(text):

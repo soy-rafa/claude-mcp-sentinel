@@ -831,6 +831,15 @@ def main():
                          bool(v_inj) and v_inj["decision"] == "ask"))
     results.append(check("ai-hardening: clean payload still allowed when AI says allow",
                          bool(v_clean) and v_clean["decision"] == "allow"))
+    os.environ.pop("SENTINEL_AI_ENDPOINT", None)
+    _ep_default = ai.endpoint()
+    os.environ["SENTINEL_AI_ENDPOINT"] = "http://127.0.0.1:11434/v1/messages"
+    try:
+        _ep_local = ai.endpoint()
+    finally:
+        os.environ.pop("SENTINEL_AI_ENDPOINT", None)
+    results.append(check("ai: endpoint defaults to Anthropic, overridable for a local model (privacy)",
+                         "anthropic.com" in _ep_default and _ep_local == "http://127.0.0.1:11434/v1/messages"))
     _tok = "ghp_" + ("a" * 36)
     _p_red = ai.build_prompt({"tool_name": "Bash", "tool_input": {"command": "echo " + _tok}},
                              "[HIGH] x", "dangerous_command")
