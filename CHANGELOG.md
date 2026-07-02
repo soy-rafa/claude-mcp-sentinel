@@ -17,7 +17,6 @@ Principio rector: **cero tokens por defecto; lo que consume es opt-in y desactiv
   en sugerencias de allowlist (`--apply` para confiarlas). Anti fatiga de preguntas.
 - **Deriva de capacidades**: el baseline marca ahora nuevos permisos/auto-approve/
   MCP (poderes nuevos), no solo comandos cambiados.
-- **Digest** `sentinel_status.py --digest`: resumen legible de lo que Sentinel hizo.
 - **IA con endpoint local** `SENTINEL_AI_ENDPOINT`: apunta la capa de IA a un modelo
   local/self-hosted (privacidad).
 - **Confianza verificable**: `SECURITY.md` (qué sale de tu máquina + divulgación) y

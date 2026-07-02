@@ -27,11 +27,10 @@ apagar del todo. Un usuario que solo quiere protección local no paga nada, nunc
 4. **Vigilante de deriva de capacidades** — el baseline de integridad ficha ahora los
    ajustes que EXPANDEN poderes (permisos, auto-approve, enable-all-MCP, servidores
    MCP) y marca lo nuevo. "Desconocido = sospechoso" para capacidades.
-5. **Digest legible** — `sentinel_status.py --digest`. Resumen en lenguaje llano de lo
-   que Sentinel ha hecho. Hace visible la protección invisible. Cero tokens.
-6. **Estado unificado** — `sentinel_status.py` (de la auditoría): hooks, firmas, feed,
-   baseline, modo, IA+presupuesto, telemetría, knobs.
-7. **IA con endpoint local (privacidad)** — `SENTINEL_AI_ENDPOINT` apunta la capa de
+5. **Estado unificado** — `sentinel_status.py`: hooks, firmas, feed, baseline, modo,
+   IA+presupuesto, telemetría, allowlist y knobs. Es la vista única de estado (se
+   descartó un `--digest` narrativo por redundante: status ya muestra más y mejor).
+6. **IA con endpoint local (privacidad)** — `SENTINEL_AI_ENDPOINT` apunta la capa de
    IA a un modelo local/self-hosted; nada sale a un tercero.
 
 ### Diseñadas (siguiente fase, requieren tu OK/tiempo)
