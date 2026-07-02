@@ -26,7 +26,12 @@ whole industry hits this — ClamAV, YARA, Sigma, Snyk, abuse.ch/URLhaus all do.
   raw research dumps (`tests/`, `docs/*-raw*`) are development-only and are not
   part of an end-user install; exclude them if you keep a dev checkout.
 - **Attack test fixtures are base64-encoded** (`tests/fixtures/attack_corpus.b64.json`).
-  No file in the repo contains plaintext reverse shells or exfil payloads.
+  No RUNTIME/shipped file contains plaintext reverse shells or exfil payloads.
+- **Exception, by design: `docs/demos/`.** The demo transcripts, `demo.sh` and the
+  asciinema `.cast` are documentation meant to be READ, so they show a few example
+  patterns in plaintext (a reverse-shell string, the Postmark incident domain, an
+  injection phrase). They are inert examples, dev-only, and not part of an end-user
+  install — exclude `docs/` from a defended machine if a signature scanner flags them.
 - **The blocklist is fetched, not shipped as a static signature DB.** Run
   `tools/update_blocklist.py` to (re)generate it locally; it is not a bundled
   list of malware you "received".
