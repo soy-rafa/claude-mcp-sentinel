@@ -3,7 +3,29 @@
 All notable changes to MCP Sentinel are recorded here. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/). Versioning is [semver](https://semver.org/).
 
-## [Unreleased] — quick wins de la auditoría (endurecimiento)
+## [Unreleased] — mejoras de producto (todas cero-token por defecto)
+
+Principio rector: **cero tokens por defecto; lo que consume es opt-in y desactivable**
+(`docs/PRODUCT-ROADMAP.md`). Nuevo:
+- **Explicaciones desactivables** `SENTINEL_EXPLAIN=static|off|ai`: el "por qué" de
+  cada veredicto es texto ESTÁTICO local (nunca llama al modelo); `off` = mensajes
+  mínimos; `ai` solo reusa un motivo de IA ya producido. Nadie paga tokens por
+  explicaciones salvo que lo pida.
+- **Escaneo pre-instalación** `config_scan.py --scan-path <dir>`: vetea una skill/MCP
+  antes de confiar (score + verdict LOW/MEDIUM/HIGH/CRITICAL). Cero tokens.
+- **Confianza adaptativa** `tools/sentinel_suggest.py`: convierte los `ask` repetidos
+  en sugerencias de allowlist (`--apply` para confiarlas). Anti fatiga de preguntas.
+- **Deriva de capacidades**: el baseline marca ahora nuevos permisos/auto-approve/
+  MCP (poderes nuevos), no solo comandos cambiados.
+- **Digest** `sentinel_status.py --digest`: resumen legible de lo que Sentinel hizo.
+- **IA con endpoint local** `SENTINEL_AI_ENDPOINT`: apunta la capa de IA a un modelo
+  local/self-hosted (privacidad).
+- **Confianza verificable**: `SECURITY.md` (qué sale de tu máquina + divulgación) y
+  `BENCHMARK.md` (prueba reproducible 69/0/0, FP=0/91).
+
+Suite 114/114, precisión FP=0/91, red-team 69/0/0.
+
+### Endurecimiento de la auditoría (usabilidad + protección)
 
 Auditoría v3.1.0 (`docs/AUDIT-v3.md`, lente usabilidad + protección). Cerrados los
 4 quick wins de mayor palanca:
