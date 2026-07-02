@@ -246,6 +246,17 @@ def main():
       {"tool_name": "Bash", "tool_input": {"command": "jq '.model' ~/.claude/settings.json > /tmp/model.txt"}},
       "allow")
 
+    # ---- WINDOWS-NATIVE credential paths (P6) -------------------------------
+    E("Windows: read %USERPROFILE% .aws credentials",
+      {"tool_name": "Bash", "tool_input": {"command": "type %USERPROFILE%\\.aws\\credentials"}},
+      "ask")
+    E("Windows: copy %USERPROFILE% ssh key",
+      {"tool_name": "Bash", "tool_input": {"command": "copy %USERPROFILE%\\.ssh\\id_rsa x"}},
+      "ask")
+    E("Windows no-FP: %APPDATA% alone is fine",
+      {"tool_name": "Bash", "tool_input": {"command": "echo %APPDATA% && dir"}},
+      "allow")
+
     # ---- CONFIRMED-MALICIOUS IOC: should still deny (hard) -------------------
 
     E("Confirmed-malicious: Postmark IOC exfil (Bash)",

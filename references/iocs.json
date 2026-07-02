@@ -31,7 +31,9 @@
       "(?i)\\.(pem|ppk)\\b",
       "(?i)credentials?\\.(json|db)",
       "(?i)secrets?\\.(json|ya?ml|env)",
-      "(?i)api[_-]?keys?\\.(json|txt|env)"
+      "(?i)api[_-]?keys?\\.(json|txt|env)",
+      "(?i)\\.aws[\\\\/]credentials\\b",
+      "(?i)%(userprofile|appdata|localappdata|homepath)%[\\\\/][^\\n\"']*(\\.ssh|\\.aws|\\.azure|\\.gnupg|credentials|id_rsa|id_ed25519|\\.ppk)"
     ]
   },
 
