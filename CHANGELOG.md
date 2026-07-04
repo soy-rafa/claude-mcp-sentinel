@@ -22,7 +22,7 @@ Principio rector: **cero tokens por defecto; lo que consume es opt-in y desactiv
 - **Confianza verificable**: `SECURITY.md` (qué sale de tu máquina + divulgación) y
   `BENCHMARK.md` (prueba reproducible 69/0/0, FP=0/91).
 
-Suite 114/114, precisión FP=0/91, red-team 69/0/0.
+Suite 113/113, precisión FP=0/91, red-team 69/0/0.
 
 ### Endurecimiento de la auditoría (usabilidad + protección)
 

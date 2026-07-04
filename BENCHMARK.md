@@ -8,7 +8,7 @@ attack would do, as data; nothing executes) and ships base64-at-rest.
 
 | Suite | Command | Result |
 |-------|---------|--------|
-| Unit + regression | `python3 tests/test_hook.py` | 114/114 passed |
+| Unit + regression | `python3 tests/test_hook.py` | 113/113 passed |
 | Precision (false-positive gate) | `python3 tests/precision_check.py` | **FP = 0 / 91**, recall 44/44 |
 | Red-team (all batteries) | `python3 tests/redteam_check.py` | **69 attacks, 0 missed, 0 false positives** |
 
