@@ -952,6 +952,14 @@ def main():
     results.append(check("feed-sync: write_meta records count+version+source",
                          bool(meta) and meta["count"] == 2 and meta["source"] == "testsrc"
                          and len(meta["version"]) == 12 and mp.exists()))
+    src1 = Path(tmpdir) / "src1.hosts"
+    src1.write_text("0.0.0.0 one.example\n0.0.0.0 shared.example\n")
+    src2 = Path(tmpdir) / "src2.hosts"
+    src2.write_text("0.0.0.0 two.example\n0.0.0.0 shared.example\n")
+    dom, used, failed = ub.collect_domains([str(src1), str(src2), str(Path(tmpdir) / "missing.hosts")])
+    results.append(check("feed-sync: multi-source unions domains + tolerates a failed source",
+                         dom == {"one.example", "two.example", "shared.example"}
+                         and len(used) == 2 and len(failed) == 1))
 
     # ---- CROSS-SERVER DATA-FLOW (#16) ---------------------------------------
     df_spec = importlib.util.spec_from_file_location("sentinel_dataflow", HOOKS / "sentinel_dataflow.py")

@@ -160,26 +160,42 @@ def write_meta(output, domains, source, meta_path=None):
         return None
 
 
+def collect_domains(sources):
+    """Fetch + parse every source and union the domains. Tolerant: a source that
+    fails or parses empty is skipped, not fatal. Returns (domains, used, failed)."""
+    domains, used, failed = set(), [], []
+    for src in sources:
+        try:
+            d = parse_hostfile(fetch(src))
+        except Exception as e:
+            failed.append(src)
+            print(f"⚠️  source failed: {src}: {e}", file=sys.stderr)
+            continue
+        if d:
+            domains |= d
+            used.append(src)
+        else:
+            failed.append(src)
+            print(f"⚠️  source parsed to zero domains: {src}", file=sys.stderr)
+    return domains, used, failed
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Update the MCP Sentinel blocklist feed.")
-    ap.add_argument("--source", default=DEFAULT_SOURCE,
-                    help="Feed URL or local hostfile path (default: URLhaus hostfile).")
+    ap.add_argument("--source", action="append", default=None,
+                    help="Feed URL or local hostfile path (repeatable; union of all). "
+                         "Default: URLhaus hostfile. Add MCP-specific feeds here as they mature.")
     ap.add_argument("--output", default=str(DEFAULT_OUTPUT),
                     help="Where to write the deduped domain list.")
     ap.add_argument("--plain", action="store_true",
                     help="Write human-readable text instead of the AV-safe base64 form.")
     args = ap.parse_args(argv)
 
-    try:
-        text = fetch(args.source)
-    except Exception as e:
-        print(f"❌ Could not fetch feed from {args.source}: {e}", file=sys.stderr)
-        print("   Existing feed left untouched.", file=sys.stderr)
-        return 1
+    sources = args.source or [DEFAULT_SOURCE]
+    domains, used, failed = collect_domains(sources)
 
-    domains = parse_hostfile(text)
     if not domains:
-        print("❌ Feed parsed to zero domains: refusing to overwrite existing feed.",
+        print("❌ All sources failed or parsed to zero domains: keeping the existing feed.",
               file=sys.stderr)
         return 1
 
@@ -190,9 +206,11 @@ def main(argv=None):
         return 1
 
     write_feed(domains, args.output, encode=not args.plain)
-    meta = write_meta(args.output, domains, args.source)
+    meta = write_meta(args.output, domains, ", ".join(used))
     ver = meta.get("version") if meta else "?"
-    print(f"✅ Wrote {len(domains)} domains to {args.output} (version {ver})")
+    print(f"✅ Wrote {len(domains)} domains to {args.output} (version {ver}) "
+          f"from {len(used)}/{len(sources)} source(s)"
+          + (f"; {len(failed)} failed" if failed else ""))
     return 0
 
 
