@@ -848,6 +848,21 @@ def main():
         os.environ.pop("SENTINEL_AI_ENDPOINT", None)
     results.append(check("ai: endpoint defaults to Anthropic, overridable for a local model (privacy)",
                          "anthropic.com" in _ep_default and _ep_local == "http://127.0.0.1:11434/v1/messages"))
+    os.environ["SENTINEL_AI"] = "on"
+    os.environ["SENTINEL_STATS_PATH"] = str(Path(tmpdir) / "ai-openai-stats.json")
+    os.environ["SENTINEL_AI_ENDPOINT"] = "http://127.0.0.1:11434/v1/chat/completions"
+    os.environ["SENTINEL_AI_MOCK"] = json.dumps({
+        "choices": [{"message": {"content": '{"verdict":"deny","reason":"exfil to unknown host"}'}}],
+        "usage": {"prompt_tokens": 42, "completion_tokens": 9}})
+    try:
+        _fmt = ai.wire_format()
+        v_oa = ai.escalate(payload_amb, "[HIGH] x", "suspicious_network")
+    finally:
+        for _k in ("SENTINEL_AI", "SENTINEL_STATS_PATH", "SENTINEL_AI_ENDPOINT", "SENTINEL_AI_MOCK"):
+            os.environ.pop(_k, None)
+    results.append(check("ai: OpenAI-compatible endpoint (ollama) parses verdict + counts tokens",
+                         _fmt == "openai" and bool(v_oa) and v_oa["decision"] == "deny"
+                         and v_oa["tokens_in"] == 42 and v_oa["tokens_out"] == 9))
     _tok = "ghp_" + ("a" * 36)
     _p_red = ai.build_prompt({"tool_name": "Bash", "tool_input": {"command": "echo " + _tok}},
                              "[HIGH] x", "dangerous_command")

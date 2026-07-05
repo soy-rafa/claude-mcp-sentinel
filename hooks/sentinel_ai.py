@@ -149,6 +149,28 @@ def build_prompt(payload, local_reason, category):
             'verdict ONLY as compact JSON: {"verdict":"allow|ask|deny","reason":"<=12 words"}.')
 
 
+def endpoint():
+    """The AI-layer endpoint (default: Anthropic). Overridable for local models
+    via SENTINEL_AI_ENDPOINT (e.g. an ollama / LM Studio / llama.cpp server)."""
+    return os.environ.get("SENTINEL_AI_ENDPOINT", "https://api.anthropic.com/v1/messages")
+
+
+def wire_format():
+    """Which request/response wire format to use: 'anthropic' (default) or 'openai'
+    (ollama, LM Studio, llama.cpp, vLLM and other OpenAI-compatible servers).
+    Explicit via SENTINEL_AI_FORMAT; otherwise auto-detected from the endpoint."""
+    fmt = os.environ.get("SENTINEL_AI_FORMAT", "").strip().lower()
+    if fmt in ("openai", "anthropic"):
+        return fmt
+    ep = endpoint().lower()
+    return "openai" if ("/chat/completions" in ep or "/v1/chat" in ep) else "anthropic"
+
+
+def _api_key():
+    return (os.environ.get("SENTINEL_AI_KEY") or os.environ.get("ANTHROPIC_API_KEY")
+            or os.environ.get("OPENAI_API_KEY"))
+
+
 def _call_api(prompt, model, key, timeout):
     mock = os.environ.get("SENTINEL_AI_MOCK")
     if mock:
@@ -158,20 +180,39 @@ def _call_api(prompt, model, key, timeout):
         "max_tokens": 60,
         "messages": [{"role": "user", "content": prompt}],
     }).encode()
-    # SENTINEL_AI_ENDPOINT lets privacy-strict users point the AI layer at a local
-    # or self-hosted Anthropic-compatible endpoint, so nothing leaves the machine.
-    endpoint = os.environ.get("SENTINEL_AI_ENDPOINT", "https://api.anthropic.com/v1/messages")
-    req = urllib.request.Request(
-        endpoint, data=body,
-        headers={"x-api-key": key, "anthropic-version": "2023-06-01",
-                 "content-type": "application/json"})
+    if wire_format() == "openai":
+        headers = {"content-type": "application/json"}
+        if key:
+            headers["authorization"] = f"Bearer {key}"
+    else:
+        headers = {"x-api-key": key or "", "anthropic-version": "2023-06-01",
+                   "content-type": "application/json"}
+    req = urllib.request.Request(endpoint(), data=body, headers=headers)
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read().decode())
 
 
-def endpoint():
-    """The AI-layer endpoint (default: Anthropic). Overridable for local models."""
-    return os.environ.get("SENTINEL_AI_ENDPOINT", "https://api.anthropic.com/v1/messages")
+def _extract_text(resp):
+    """Pull the assistant text out of either an Anthropic or an OpenAI response."""
+    content = resp.get("content")
+    if isinstance(content, list):
+        return "".join(b.get("text", "") for b in content
+                       if isinstance(b, dict) and b.get("type") == "text")
+    if isinstance(content, str):
+        return content
+    ch = resp.get("choices")
+    if isinstance(ch, list) and ch:
+        c = (ch[0].get("message") or {}).get("content")
+        if isinstance(c, str):
+            return c
+    return ""
+
+
+def _usage(resp):
+    u = resp.get("usage", {}) or {}
+    ai_in = int(u.get("input_tokens", u.get("prompt_tokens", 0)) or 0)
+    ai_out = int(u.get("output_tokens", u.get("completion_tokens", 0)) or 0)
+    return ai_in, ai_out
 
 
 def _parse_verdict(text):
@@ -194,20 +235,15 @@ def escalate(payload, local_reason, category, timeout=3.0):
     try:
         if not enabled():
             return None
-        key = os.environ.get("ANTHROPIC_API_KEY")
-        if not key and not os.environ.get("SENTINEL_AI_MOCK"):
+        key = _api_key()
+        # A local OpenAI-compatible server (ollama etc.) needs no key; only the
+        # hosted Anthropic path strictly requires one.
+        if wire_format() == "anthropic" and not key and not os.environ.get("SENTINEL_AI_MOCK"):
             return None
         if _today_ai_tokens() >= _budget():
             return None
         resp = _call_api(build_prompt(payload, local_reason, category), _model(), key, timeout)
-        content = resp.get("content")
-        if isinstance(content, list):
-            text = "".join(b.get("text", "") for b in content if isinstance(b, dict) and b.get("type") == "text")
-        elif isinstance(content, str):
-            text = content
-        else:
-            text = ""
-        verdict = _parse_verdict(text)
+        verdict = _parse_verdict(_extract_text(resp))
         if verdict is None:
             return None
         # Deterministic anti-injection backstop, OUTSIDE the model (un-promptable):
@@ -218,9 +254,7 @@ def escalate(payload, local_reason, category, timeout=3.0):
         if verdict["decision"] == "allow" and _looks_injected(_field_text(payload)):
             verdict["decision"] = "ask"
             verdict["reason"] = "injection markers in payload; AI 'allow' capped to ask"
-        usage = resp.get("usage", {}) or {}
-        ai_in = int(usage.get("input_tokens", 0))
-        ai_out = int(usage.get("output_tokens", 0))
+        ai_in, ai_out = _usage(resp)
         try:
             import sentinel_stats
             sentinel_stats.bump(session_id=payload.get("session_id"),
