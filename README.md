@@ -56,7 +56,12 @@ Runs automatically every morning to re-scan everything. A skill that was safe ye
 
 Download `mcp-sentinel.skill` from [Releases](../../releases) and double-click to install.
 
-Or manually: copy the whole folder into `.claude/skills/mcp-sentinel/` in your project (or `~/.claude/skills/mcp-sentinel/` for global). Then run `bash hooks/install_hooks.sh --user` to enable the runtime hook.
+Or manually: copy the whole folder into `.claude/skills/mcp-sentinel/` in your project (or `~/.claude/skills/mcp-sentinel/` for global). Then enable the runtime hook:
+
+- macOS / Linux: `bash hooks/install_hooks.sh --user`
+- Any platform, including native Windows (no bash or jq needed): `python3 hooks/install_hooks.py --user` (use `python` on Windows). Remove it with `--uninstall`.
+
+Verify the install with `python3 tools/sentinel_status.py`.
 
 ## Usage
 
@@ -68,6 +73,26 @@ Just talk to Claude:
 - *"Run a security audit"*
 
 MCP Sentinel triggers automatically when it detects you're about to install something or when you mention security concerns.
+
+## When Sentinel asks you (quick guide)
+
+The runtime hook stays out of your way and only speaks up when a tool call looks risky.
+
+- **No message = allowed.** Normal work runs silently. Zero friction, zero tokens.
+- **An "Approve / Deny" prompt** means Sentinel flagged something (reading a credential file, a reverse shell, an exfiltration destination, a change to your agent config). You decide:
+  - **Approve** if you recognize and trust it. For a path or domain, approving is *remembered*, so it stops asking about that one.
+  - **Deny** to block the call.
+- **A hard block with no choice** happens only for confirmed-malicious infrastructure (curated incident domains, the URLhaus malware feed). Not overridable.
+
+Handy commands:
+
+- See what Sentinel is doing and how it is configured: `python3 tools/sentinel_status.py`
+- Turn recurring asks into one-click trust: `python3 tools/sentinel_suggest.py` (add `--apply`)
+- Vet a skill or MCP *before* installing it: `python3 tools/config_scan.py --scan-path ./that-skill`
+- Run without ever blocking (just measure): `SENTINEL_SHADOW=on` (see `would_block` in the status)
+- Leaner messages, no explanations: `SENTINEL_EXPLAIN=off`
+
+Got a false positive? Approve it once, or add the path/domain to `~/.claude/sentinel-allowlist.json`. A few patterns are intentionally cautious and will ask (for example, appending to `~/.zshrc`); that is expected. Full knob reference: `docs/PRODUCT-ROADMAP.md`.
 
 ## How it works
 

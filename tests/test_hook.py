@@ -271,6 +271,17 @@ def main():
       {"tool_name": "Bash", "tool_input": {"command": "echo %APPDATA% && dir"}},
       "allow")
 
+    # ---- crontab: narrowed so listing is not a false positive ---------------
+    E("No-FP: crontab -l just lists jobs",
+      {"tool_name": "Bash", "tool_input": {"command": "crontab -l"}},
+      "allow")
+    E("crontab -e edits (persistence) -> ask",
+      {"tool_name": "Bash", "tool_input": {"command": "crontab -e"}},
+      "ask")
+    E("crontab installs from a file -> ask",
+      {"tool_name": "Bash", "tool_input": {"command": "crontab /tmp/jobs.txt"}},
+      "ask")
+
     # ---- CONFIRMED-MALICIOUS IOC: should still deny (hard) -------------------
 
     E("Confirmed-malicious: Postmark IOC exfil (Bash)",

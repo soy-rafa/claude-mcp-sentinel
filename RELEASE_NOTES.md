@@ -128,22 +128,23 @@ Full detail per version lives in `CHANGELOG.md`.
 - `docs/reel-guion-v3.md` (new): audience reel script.
 - `SKILL.md`, `hooks/README.md`, `CHANGELOG.md`, `RED-TEAM-LOG.md`, `ANTIVIRUS.md`: updated.
 
-## Proposed follow-ups (from the Windows report, not yet done)
-- **Cross-platform installer.** `install_hooks.sh` is bash + `jq` + `python3`,
-  which doesn't apply on native Windows; the tester had to register the hook by
-  hand. A `install_hooks.py` (stdlib-only, edits settings.json) would cover all
-  platforms.
-- **Windows install docs.** `python` vs `python3`, manual hook registration.
-- **Windows IOC coverage.** Add native patterns to `iocs.json`: `%USERPROFILE%`,
-  `%APPDATA%`, PuTTY `*.ppk`, Windows credential store, etc. (normalisation fixes
-  matching; these widen coverage).
-- **Substring-match permissiveness.** Path allowlist/detection uses substring
-  matching; a short pattern matches broadly. Worth tightening to path-segment
-  boundaries (pre-existing, not Windows-specific).
+## Proposed follow-ups (from the Windows report)
+- **Cross-platform installer.** DONE: `hooks/install_hooks.py` (stdlib-only, edits
+  settings.json, idempotent, `--uninstall`) covers native Windows without bash/jq.
+- **Windows install docs.** DONE: README Install section documents `install_hooks.py`
+  and `python` vs `python3`.
+- **Windows IOC coverage.** DONE: `iocs.json` now has AWS-cred any-separator and
+  `%USERPROFILE%`/`%APPDATA%` env-var credential patterns.
+- **Substring-match permissiveness.** STILL OPEN: path allowlist/detection uses
+  substring matching; worth tightening to path-segment boundaries (pre-existing,
+  not Windows-specific).
 
 ## Pre-publish checklist
+- [ ] **Cut a new version.** SKILL.md is still `3.1.0`, but the `[Unreleased]`
+      CHANGELOG block holds the audit hardening + product features + demos + the
+      style sweep. Bump SKILL.md (e.g. `3.2.0`) and tag.
 - [ ] Fill in the Windows reporter's credit handle (CHANGELOG 2.5.0 + above).
-- [ ] Run `python3 tests/test_hook.py` (or `python` on Windows) → expect 90/90.
+- [ ] Run `python3 tests/test_hook.py` (or `python` on Windows) → expect 116/116.
 - [ ] Run `python3 tests/precision_check.py` → expect FP=0, full recall.
 - [ ] Run `python3 tests/redteam_check.py` → expect 0 missed, 0 FP across batteries.
 - [ ] Run `python3 tools/update_blocklist.py` to refresh the bundled feed snapshot.
