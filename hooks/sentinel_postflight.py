@@ -36,6 +36,7 @@ try:
         is_allowlisted_domain,
         detect_language,
         render,
+        session_trust_path,
         _read_stdin_payload,
         AUTO_REMEMBER_CATEGORIES,
     )
@@ -51,13 +52,18 @@ KEY_BY_CATEGORY = {
 }
 
 
-def allowlist_write_target():
-    """Single file to persist auto-remembered trust into.
+def allowlist_write_target(payload=None):
+    """Where to persist auto-remembered trust.
 
-    Honours SENTINEL_ALLOWLIST_PATH (used by tests and non-standard setups);
-    otherwise the global ~/.claude/sentinel-allowlist.json. We never write to a
-    project-local .security/ file implicitly: auto-trust goes to one known place.
+    With SENTINEL_TRUST=session, trust is scoped to THIS session (a per-session
+    file that expires with it), so approving something 'just for now' does not
+    grant permanent trust. Otherwise (default 'permanent'): SENTINEL_ALLOWLIST_PATH
+    if set, else the global ~/.claude/sentinel-allowlist.json.
     """
+    if os.environ.get("SENTINEL_TRUST", "permanent").strip().lower() == "session" and payload:
+        sid = payload.get("session_id") or payload.get("sessionId")
+        if sid:
+            return session_trust_path(sid)
     override = os.environ.get("SENTINEL_ALLOWLIST_PATH")
     if override:
         return Path(override)
@@ -147,7 +153,7 @@ def main():
     if already_trusted(entity, key, load_user_allowlist()):
         return
 
-    target = allowlist_write_target()
+    target = allowlist_write_target(payload)
     if add_entity(target, key, entity):
         tool_name = payload.get("tool_name") or payload.get("tool", "this tool")
         message = render("remembered", detect_language(payload),

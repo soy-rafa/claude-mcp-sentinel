@@ -534,7 +534,7 @@ def decide(payload):
     can auto-remember an approved decision (only path/domain entities qualify).
     """
     iocs = load_iocs()
-    allowlist = load_user_allowlist()
+    allowlist = _merge_session_trust(load_user_allowlist(), payload)
 
     tool_name = payload.get("tool_name") or payload.get("tool", "")
     tool_input = payload.get("tool_input") or payload.get("input") or {}
@@ -833,6 +833,35 @@ def _state_path(session_id):
     base = os.environ.get("SENTINEL_STATE_DIR")
     base = Path(base) if base else (Path.home() / ".claude" / "sentinel-state")
     return base / f"{sid}.json"
+
+
+def session_trust_path(session_id):
+    """Where session-scoped trust lives (SENTINEL_TRUST=session). Expires with the
+    session because it is keyed by session id and never merged into the permanent
+    allowlist. Sits next to the session state."""
+    return _state_path(session_id).with_suffix(".trust.json")
+
+
+def _merge_session_trust(allowlist, payload):
+    """Fold this session's session-scoped trust into the allowlist for this call
+    only. Cheap: if the session-trust file does not exist, returns the allowlist
+    unchanged. Lets a user approve something 'just for now' without permanent trust."""
+    try:
+        sid = payload.get("session_id") or payload.get("sessionId")
+        if not sid:
+            return allowlist
+        p = session_trust_path(sid)
+        if not p.exists():
+            return allowlist
+        st = json.loads(p.read_text())
+        if not isinstance(st, dict):
+            return allowlist
+        merged = dict(allowlist)
+        for k in ("paths", "domains"):
+            merged[k] = list(allowlist.get(k, [])) + [x for x in st.get(k, []) if isinstance(x, str)]
+        return merged
+    except Exception:
+        return allowlist
 
 
 _CHAIN_CRED = {"sensitive_path", "sensitive_env"}

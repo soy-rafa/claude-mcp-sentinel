@@ -340,6 +340,28 @@ def main():
     results.append(check("Postflight: confirmed-malicious never auto-remembered",
                          not data5.get("domains") and out5 == ""))
 
+    # T6: SENTINEL_TRUST=session scopes an approval to THIS session only.
+    ts_state = Path(tmpdir) / "ts-state"
+    ts_perm = Path(tmpdir) / "ts-perm.json"
+    ts_perm.write_text(json.dumps({"paths": [], "domains": []}))
+    ts_payload = {"tool_name": "Read", "tool_input": {"file_path": "/home/me/svc/.env"},
+                  "session_id": "tsX"}
+    os.environ["SENTINEL_TRUST"] = "session"
+    os.environ["SENTINEL_STATE_DIR"] = str(ts_state)
+    try:
+        out6, perm6 = run_posthook(ts_payload, ts_perm, feed_path=empty_feed)
+        strust = ts_state / "tsX.trust.json"  # = session_trust_path under SENTINEL_STATE_DIR
+        sdata = json.loads(strust.read_text()) if strust.exists() else {}
+        r_same = run_hook(ts_payload, allowlist_path=ts_perm, feed_path=empty_feed)
+        r_other = run_hook({**ts_payload, "session_id": "tsOther"}, allowlist_path=ts_perm, feed_path=empty_feed)
+    finally:
+        os.environ.pop("SENTINEL_TRUST", None)
+        os.environ.pop("SENTINEL_STATE_DIR", None)
+    results.append(check("Postflight: SENTINEL_TRUST=session writes session file (not permanent), scoped to session",
+                         "/home/me/svc/.env" in sdata.get("paths", [])
+                         and perm6.get("paths", []) == []
+                         and r_same["decision"] == "allow" and r_other["decision"] == "ask"))
+
     # ---- FEED BLOCKLIST: exact-host match (Phase 2) --------------------------
 
     # A populated feed fixture with two specific malware hosts.

@@ -121,6 +121,7 @@ def build_report():
         ("SENTINEL_INTEGRITY_ENFORCE", "on = hard-block commands that tamper with Sentinel's own config"),
         ("SENTINEL_EXPLAIN", "static (default, zero-token why) | off (leanest) | ai (reuse AI reason)"),
         ("SENTINEL_LANG", "es | en (default: auto-detect)"),
+        ("SENTINEL_TRUST", "permanent (default) | session (approve trusts only this session)"),
         ("SENTINEL_ALLOWLIST_PATH", "override the allowlist location"),
     ):
         val = os.environ.get(env) or "(default/unset)"
