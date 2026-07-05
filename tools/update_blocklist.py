@@ -160,6 +160,34 @@ def write_meta(output, domains, source, meta_path=None):
         return None
 
 
+def _meta_path():
+    return Path.home() / ".claude" / "sentinel" / "feed-meta.json"
+
+
+def _prev_version():
+    """Version string of the feed we last wrote (to detect a real change)."""
+    try:
+        return json.loads(_meta_path().read_text()).get("version")
+    except Exception:
+        return None
+
+
+def _notify(title, text):
+    """Best-effort desktop notification (macOS). Never raises."""
+    try:
+        import platform
+        import subprocess
+        if platform.system() == "Darwin":
+            safe = text.replace('"', "'")
+            subprocess.run(
+                ["osascript", "-e", f'display notification "{safe}" with title "{title}"'],
+                timeout=5, check=False)
+        else:
+            print(f"[{title}] {text}")
+    except Exception:
+        pass
+
+
 def collect_domains(sources):
     """Fetch + parse every source and union the domains. Tolerant: a source that
     fails or parses empty is skipped, not fatal. Returns (domains, used, failed)."""
@@ -189,8 +217,11 @@ def main(argv=None):
                     help="Where to write the deduped domain list.")
     ap.add_argument("--plain", action="store_true",
                     help="Write human-readable text instead of the AV-safe base64 form.")
+    ap.add_argument("--notify", action="store_true",
+                    help="Show a desktop notification when the feed actually changed (for cron/launchd).")
     args = ap.parse_args(argv)
 
+    prev_ver = _prev_version()
     sources = args.source or [DEFAULT_SOURCE]
     domains, used, failed = collect_domains(sources)
 
@@ -211,6 +242,8 @@ def main(argv=None):
     print(f"✅ Wrote {len(domains)} domains to {args.output} (version {ver}) "
           f"from {len(used)}/{len(sources)} source(s)"
           + (f"; {len(failed)} failed" if failed else ""))
+    if args.notify and ver != prev_ver:
+        _notify("MCP Sentinel", f"Lista de malware actualizada: {len(domains)} dominios.")
     return 0
 
 
