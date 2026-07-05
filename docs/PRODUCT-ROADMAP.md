@@ -70,6 +70,20 @@ apagar del todo. Un usuario que solo quiere protección local no paga nada, nunc
 - `python3 hooks/install_hooks.py [--user|--project|--uninstall]`: instalar (multiplataforma).
 
 ## Prioridad recomendada para la siguiente fase
-1. Confianza adaptativa + digest ya están; falta pulir el "trust this session".
-2. Lanzamiento público (8): máxima palanca reputación, con `SECURITY.md` + `BENCHMARK.md` ya listos.
-3. Auto-update firmado (9): el "advanced auto-update" que da resiliencia sin romper el modelo local.
+1. Lanzamiento público (8): máxima palanca reputación, con `SECURITY.md` + `BENCHMARK.md`
+   ya listos. Bloqueado a propósito: Rafa sincroniza el lanzamiento con un reel.
+2. Auto-update firmado (9): el "advanced auto-update" que da resiliencia. Diseño en
+   `docs/DESIGN-auto-update-multihost.md` (falta clave de firma + decidir la vía de crypto).
+3. Multi-host: diseño en el mismo doc (falta el API de hooks de cada cliente).
+
+## Ejecutado 2026-07-05 (todo en local, sin publicar)
+- **Local-AI real**: `SENTINEL_AI_FORMAT=openai` + `SENTINEL_AI_ENDPOINT` -> ollama /
+  LM Studio / llama.cpp. La capa de IA puede correr 100% local (privacidad total).
+- **Trust this session**: `SENTINEL_TRUST=session` (aprobar confía solo por la sesión).
+- **Multi-feed**: `update_blocklist --source` repetible (unión de varias fuentes).
+- **U4**: guía "cuando Sentinel te pregunta" en el README + install multiplataforma documentado.
+- **FP**: `crontab -l` ya no pregunta (acotado a `-e`/`-r`/instalación).
+- **Diseño** (no construido, requieren externo): reglas firmadas + multi-host en
+  `docs/DESIGN-auto-update-multihost.md`.
+- **Pendiente que necesita tu OK aparte**: cron diario del updater (toca crontab);
+  wiring profundo del data-flow MCP (research-sized, el hook no ve `tools/list`).

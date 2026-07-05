@@ -24,6 +24,21 @@ Principio rector: **cero tokens por defecto; lo que consume es opt-in y desactiv
 
 Suite 113/113, precisión FP=0/91, red-team 69/0/0.
 
+### Tanda de pendientes ejecutada (2026-07-05, en local)
+- **Local-AI real**: la capa de IA opcional habla formato OpenAI además de Anthropic
+  (`SENTINEL_AI_FORMAT=openai`, autodetectado por endpoint), así corre contra ollama /
+  LM Studio / llama.cpp locales: privacidad total, nada sale de la máquina.
+- **Trust this session** (`SENTINEL_TRUST=session`): aprobar algo lo confía solo por
+  esta sesión (fichero que caduca), no de forma permanente.
+- **Updater multi-fuente**: `update_blocklist --source` repetible, une varios feeds y
+  tolera que uno falle. Base del auto-update de reglas firmadas (diseño en
+  `docs/DESIGN-auto-update-multihost.md`).
+- **Guía de usuario (U4)** en el README ("cuando Sentinel te pregunta") + instalación
+  multiplataforma documentada.
+- **Falso positivo**: `crontab -l` (listar) ya no pregunta; solo `-e`/`-r`/instalación.
+
+Suite 119/119, precisión FP=0/91, red-team 69/0/0.
+
 ### Endurecimiento de la auditoría (usabilidad + protección)
 
 Auditoría v3.1.0 (`docs/AUDIT-v3.md`, lente usabilidad + protección). Cerrados los
