@@ -6,6 +6,8 @@ Security agent for Claude Code and Cowork. **v2 blocks malicious tool calls in r
 **License:** [MIT](./LICENSE)
 **Latest version:** 2.0, April 2026 ([changelog](./CHANGELOG.md))
 
+> **Not affiliated** with Microsoft Sentinel, SentinelOne, Redis Sentinel, HashiCorp Sentinel, or any other product that has "Sentinel" in its name. This is an independent, open-source security skill for Claude Code. "Sentinel" is a common term in security; see [Trademarks](#trademarks).
+
 ## Why
 
 The AI skills ecosystem is growing fast, but so are the attacks. [Snyk's ToxicSkills study](https://snyk.io/blog/toxicskills-malicious-ai-agent-skills-clawhub/) found that **36% of skills contain security flaws**, including 76 with confirmed malicious payloads. And in September 2025 the [Postmark MCP incident](https://thehackernews.com/2025/09/first-malicious-mcp-server-found.html) became the canonical supply-chain attack in this ecosystem: fifteen clean versions followed by a single-line update that silently BCC'd every outgoing email to `phan@giftshop.club`.
@@ -167,7 +169,7 @@ This software is provided "as is", without warranty of any kind. MCP Sentinel is
 
 ### Trademarks
 
-"MCP Sentinel" is the project name chosen by the author. GitHub, Claude, Anthropic, Snyk, and other product names mentioned in this repository are trademarks of their respective owners.
+"MCP Sentinel" is the project name chosen by the author. This project is **independent and not affiliated with, endorsed by, or connected to** Microsoft Sentinel (the Microsoft Azure SIEM), SentinelOne, Redis Sentinel, HashiCorp Sentinel, or any other product that includes "Sentinel" in its name. "Sentinel" is a common, descriptive term in the security industry. GitHub, Claude, Anthropic, Snyk, Microsoft, and other product names mentioned in this repository are trademarks of their respective owners.
 
 ---
 
