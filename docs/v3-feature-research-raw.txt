@@ -220,7 +220,7 @@
           "acceptance": "Test: 'trivia-game' instalado hace 2 min; whatsapp-MCP devuelve historial; un tool de 'trivia-game' recibe ese historial como argumento -> 'ask' por flujo A->B. Encadenamiento dentro del mismo servidor -> no dispara. Medir FP sobre traza real antes de activar (OFF por defecto)."
         }
       ],
-      "summary": "MCP Sentinel v3.0 = misma filosofia que v2.7 (hot path local 0-tokens, fail-open, base64 at-rest, i18n es/en) mas cuatro subsistemas FUERA del hot path y una capa de IA estrictamente opcional. Verificado en el repo: el camino caliente es decide() en hooks/sentinel_preflight.py:483-550 (regex sobre campos scopeados, ya NO sobre _collect_strings, ver 202-211); el statusbar ~/.claude/custom_bar.sh ya tiene un slot Sentinel (140-150) que hoy solo muestra SNTL:ON/OFF leyendo settings.json, sin tokens; tools/update_blocklist.py es MANUAL (no hay daemon ni auto-sync); tools/config_scan.py YA existe como scanner determinista + watcher de integridad con baseline base64 (no es un workflow LLM como sugiere alguna idea, eso era v1) pero su hash esta TRUNCADO a 16 chars (_sha en config_scan.py:62-63 -> bug real de colisiones, idea #4 confirmada); no hay quarantine, ni session-state cross-tool, ni token economy. Existe docs/V3-PROPOSAL.md con 10 capacidades determinísticas ya razonadas (firmas CVE-2025-66032, anti line-jumping, integrity watcher); las he integrado en vez de duplicarlas. De-dupliqué las 48 ideas: las tres variantes de anomaly/escalation IA colapsan en UN motor de escalada; las dos de trajectory/attack-chain colapsan en una; IOC feed auto-sync + supply-chain baseline comparten subsistema. Orden de build: primero fixes deterministas baratos y de FP cero (hash completo, FP contenido-vs-accion, firmas bypass, corpus) que no tocan arquitectura; luego la telemetria (stats.json) que statusline e IA necesitan como dependencia; luego la statusline; luego la capa IA opcional sobre esa telemetria con su presupuesto; al final lo de mayor FP (escaner MCP, integrity extendido, session-state cross-tool). Decisiones IRREVERSIBLES que NO tomo y debe elegir Rafa: (1) que modelo concreto usa la escalada IA (Haiku barato por defecto vs modelo de sesion); (2) si el integrity watcher solo AVISA o puede BLOQUEAR arranque (cambia el contrato fail-open); (3) si el feed corre como daemon persistente o como cron/SessionStart oportunista. Todo respeta los cuatro constraints: no para el flujo (todo es allow+additionalContext o post-facto), hot path sigue local <50ms, cada item es testeable en aislamiento, y el unico gasto de tokens (escalada IA) es opt-in, con presupuesto duro y reporte en statusline. Ficheros clave: /Users/rafaeltunonsanchez/.claude/skills/mcp-sentinel/hooks/sentinel_preflight.py, /hooks/sentinel_postflight.py, /tools/config_scan.py, /tools/update_blocklist.py, /docs/V3-PROPOSAL.md, /references/iocs.json y /Users/rafaeltunonsanchez/.claude/custom_bar.sh.</summary>\n<token_economy_design>Principio: el camino normal NUNCA gasta tokens. La escalada IA es un fallback OPT-IN que solo se dispara cuando el clasificador determinista NO decide claramente (allow/deny/ask claros se resuelven local, 0 tokens). Cinco capas: (1) GATING. La IA solo se invoca cuando decide() devolveria 'ask' por heuristica ambigua (high/critical de categorias NO hard-deny) Y SENTINEL_AI=on. known_malicious/feed_blocklist siguen deny local sin IA. Estimo <10-15% de las llamadas YA marcadas, que son una fraccion pequena del total. (2) PROMPT MINIMO. Solo tool_name + campos scopeados (command/paths/url), no el payload entero ni el transcript. Salida acotada ~150-200 tokens (JSON {score, reason}). (3) PRESUPUESTO DURO. Contador en ~/.claude/sentinel/stats.json con tope diario configurable (default conservador ~5000 tokens/dia). Al superarlo, las ambiguedades caen a 'ask' determinista (comportamiento de hoy) con nota 'AI budget exceeded', sin gastar mas. La factura no se dispara aunque haya muchas ambiguedades. (4) NO BLOQUEA. La escalada es asincrona respecto a la decision: timeout ~2s o fallo -> 'ask' determinista (fail-open hacia el comportamiento actual, nunca peor). El flujo del usuario no se detiene esperando al modelo. (5) TRANSPARENCIA. Cada escalada escribe modelo (fingerprint, p.ej. 'haiku-4.5'), tokens_in/out y coste estimado; el additionalContext incluye '(AI: N tokens, <modelo>)'. La statusline lee stats.json y muestra el acumulado de sesion. NO recomiendo el modelo concreto (decision de Rafa): Haiku barato minimiza coste, el modelo de sesion da mejor juicio pero mas caro. Honestidad: el ahorro depende de que el gating determinista sea bueno; si marca demasiado ambiguo, sube el gasto, por eso el presupuesto duro es la red de seguridad no negociable.</token_economy_design>\n<statusbar_design>Integracion en el slot Sentinel YA existente de ~/.claude/custom_bar.sh (140-150), que hoy solo imprime '🛡 SNTL:ON/OFF' leyendo si el hook esta en settings.json. Reglas duras heredadas del script: bash puro, sin invocar Python por tick (mata el render a 1Hz), todo desde lecturas baratas de ficheros. El widget v3.0 lee ~/.claude/sentinel/stats.json (escrito por los hooks, no por el statusbar) y compone tres campos compactos: (1) ESTADO con semaforo: verde nominal (hook ON, sin alertas) | amarillo-N (alertas/quarantine pendientes, p.ej. amarillo 2) | rojo (hook OFF o integrity drift sin reconocer). Mantiene el SNTL:OFF rojo actual cuando el hook no esta registrado. (2) TOKENS IA de la sesion, solo si SENTINEL_AI=on y hubo gasto: 'AI:1.2k' coloreado por % del presupuesto (verde <60%, amarillo <85%, rojo cerca del tope) reusando color_pct (129-135). Si la IA esta off o 0 tokens, NO se muestra (sin ruido). (3) opcional, ultimo timestamp de alerta abreviado si hay pendiente. Formato propuesto tras '🛡': '🛡 verde SNTL · AI:1.2k' nominal, o '🛡 amarillo2 SNTL · AI:3.4k' con alertas. Robustez: si stats.json no existe o es ilegible, cae al comportamiento de hoy (solo SNTL:ON/OFF) sin romper la barra; jq con //default en cada campo como el resto del script. Una unica lectura barata de stats.json. Cero llamadas a Python, cero red.</statusbar_design>\n</invoke>\n"
+      "summary": "MCP Sentinel v3.0 = misma filosofia que v2.7 (hot path local 0-tokens, fail-open, base64 at-rest, i18n es/en) mas cuatro subsistemas FUERA del hot path y una capa de IA estrictamente opcional. Verificado en el repo: el camino caliente es decide() en hooks/sentinel_preflight.py:483-550 (regex sobre campos scopeados, ya NO sobre _collect_strings, ver 202-211); el statusbar ~/.claude/custom_bar.sh ya tiene un slot Sentinel (140-150) que hoy solo muestra SNTL:ON/OFF leyendo settings.json, sin tokens; tools/update_blocklist.py es MANUAL (no hay daemon ni auto-sync); tools/config_scan.py YA existe como scanner determinista + watcher de integridad con baseline base64 (no es un workflow LLM como sugiere alguna idea, eso era v1) pero su hash esta TRUNCADO a 16 chars (_sha en config_scan.py:62-63 -> bug real de colisiones, idea #4 confirmada); no hay quarantine, ni session-state cross-tool, ni token economy. Existe docs/V3-PROPOSAL.md con 10 capacidades determinísticas ya razonadas (firmas CVE-2025-66032, anti line-jumping, integrity watcher); las he integrado en vez de duplicarlas. De-dupliqué las 48 ideas: las tres variantes de anomaly/escalation IA colapsan en UN motor de escalada; las dos de trajectory/attack-chain colapsan en una; IOC feed auto-sync + supply-chain baseline comparten subsistema. Orden de build: primero fixes deterministas baratos y de FP cero (hash completo, FP contenido-vs-accion, firmas bypass, corpus) que no tocan arquitectura; luego la telemetria (stats.json) que statusline e IA necesitan como dependencia; luego la statusline; luego la capa IA opcional sobre esa telemetria con su presupuesto; al final lo de mayor FP (escaner MCP, integrity extendido, session-state cross-tool). Decisiones IRREVERSIBLES que NO tomo y debe elegir Rafa: (1) que modelo concreto usa la escalada IA (Haiku barato por defecto vs modelo de sesion); (2) si el integrity watcher solo AVISA o puede BLOQUEAR arranque (cambia el contrato fail-open); (3) si el feed corre como daemon persistente o como cron/SessionStart oportunista. Todo respeta los cuatro constraints: no para el flujo (todo es allow+additionalContext o post-facto), hot path sigue local <50ms, cada item es testeable en aislamiento, y el unico gasto de tokens (escalada IA) es opt-in, con presupuesto duro y reporte en statusline. Ficheros clave: /Users/usuario/.claude/skills/mcp-sentinel/hooks/sentinel_preflight.py, /hooks/sentinel_postflight.py, /tools/config_scan.py, /tools/update_blocklist.py, /docs/V3-PROPOSAL.md, /references/iocs.json y /Users/usuario/.claude/custom_bar.sh.</summary>\n<token_economy_design>Principio: el camino normal NUNCA gasta tokens. La escalada IA es un fallback OPT-IN que solo se dispara cuando el clasificador determinista NO decide claramente (allow/deny/ask claros se resuelven local, 0 tokens). Cinco capas: (1) GATING. La IA solo se invoca cuando decide() devolveria 'ask' por heuristica ambigua (high/critical de categorias NO hard-deny) Y SENTINEL_AI=on. known_malicious/feed_blocklist siguen deny local sin IA. Estimo <10-15% de las llamadas YA marcadas, que son una fraccion pequena del total. (2) PROMPT MINIMO. Solo tool_name + campos scopeados (command/paths/url), no el payload entero ni el transcript. Salida acotada ~150-200 tokens (JSON {score, reason}). (3) PRESUPUESTO DURO. Contador en ~/.claude/sentinel/stats.json con tope diario configurable (default conservador ~5000 tokens/dia). Al superarlo, las ambiguedades caen a 'ask' determinista (comportamiento de hoy) con nota 'AI budget exceeded', sin gastar mas. La factura no se dispara aunque haya muchas ambiguedades. (4) NO BLOQUEA. La escalada es asincrona respecto a la decision: timeout ~2s o fallo -> 'ask' determinista (fail-open hacia el comportamiento actual, nunca peor). El flujo del usuario no se detiene esperando al modelo. (5) TRANSPARENCIA. Cada escalada escribe modelo (fingerprint, p.ej. 'haiku-4.5'), tokens_in/out y coste estimado; el additionalContext incluye '(AI: N tokens, <modelo>)'. La statusline lee stats.json y muestra el acumulado de sesion. NO recomiendo el modelo concreto (decision de Rafa): Haiku barato minimiza coste, el modelo de sesion da mejor juicio pero mas caro. Honestidad: el ahorro depende de que el gating determinista sea bueno; si marca demasiado ambiguo, sube el gasto, por eso el presupuesto duro es la red de seguridad no negociable.</token_economy_design>\n<statusbar_design>Integracion en el slot Sentinel YA existente de ~/.claude/custom_bar.sh (140-150), que hoy solo imprime '🛡 SNTL:ON/OFF' leyendo si el hook esta en settings.json. Reglas duras heredadas del script: bash puro, sin invocar Python por tick (mata el render a 1Hz), todo desde lecturas baratas de ficheros. El widget v3.0 lee ~/.claude/sentinel/stats.json (escrito por los hooks, no por el statusbar) y compone tres campos compactos: (1) ESTADO con semaforo: verde nominal (hook ON, sin alertas) | amarillo-N (alertas/quarantine pendientes, p.ej. amarillo 2) | rojo (hook OFF o integrity drift sin reconocer). Mantiene el SNTL:OFF rojo actual cuando el hook no esta registrado. (2) TOKENS IA de la sesion, solo si SENTINEL_AI=on y hubo gasto: 'AI:1.2k' coloreado por % del presupuesto (verde <60%, amarillo <85%, rojo cerca del tope) reusando color_pct (129-135). Si la IA esta off o 0 tokens, NO se muestra (sin ruido). (3) opcional, ultimo timestamp de alerta abreviado si hay pendiente. Formato propuesto tras '🛡': '🛡 verde SNTL · AI:1.2k' nominal, o '🛡 amarillo2 SNTL · AI:3.4k' con alertas. Robustez: si stats.json no existe o es ilegible, cae al comportamiento de hoy (solo SNTL:ON/OFF) sin romper la barra; jq con //default en cada campo como el resto del script. Una unica lectura barata de stats.json. Cero llamadas a Python, cero red.</statusbar_design>\n</invoke>\n"
     },
     "ideas": [
       {
@@ -681,7 +681,7 @@
           },
           {
             "title": "V3-PROPOSAL.md: Escáner determinista de descripciones de tools MCP (Anti line-jumping)",
-            "url": "file:///Users/rafaeltunonsanchez/.claude/skills/mcp-sentinel/docs/V3-PROPOSAL.md"
+            "url": "file:///Users/usuario/.claude/skills/mcp-sentinel/docs/V3-PROPOSAL.md"
           },
           {
             "title": "Bitdefender: Advanced Threat Defense (behavioral analysis)",
@@ -707,7 +707,7 @@
           },
           {
             "title": "V3-PROPOSAL.md: Watcher de integridad de configuración con baseline firmado",
-            "url": "file:///Users/rafaeltunonsanchez/.claude/skills/mcp-sentinel/docs/V3-PROPOSAL.md"
+            "url": "file:///Users/usuario/.claude/skills/mcp-sentinel/docs/V3-PROPOSAL.md"
           },
           {
             "title": "CrowdStrike Falcon: Integrity Monitoring & Baseline Verification",
@@ -733,7 +733,7 @@
           },
           {
             "title": "MCP Sentinel config_scan.py (existing implementation)",
-            "url": "file:///Users/rafaeltunonsanchez/.claude/skills/mcp-sentinel/tools/config_scan.py"
+            "url": "file:///Users/usuario/.claude/skills/mcp-sentinel/tools/config_scan.py"
           },
           {
             "title": "ClamAV Documentation: Daemon Checks configuration",
@@ -755,7 +755,7 @@
         "sources": [
           {
             "title": "V3-PROPOSAL.md: [P0] Firmas de bypass de allowlist de comandos",
-            "url": "file:///Users/rafaeltunonsanchez/.claude/skills/mcp-sentinel/docs/V3-PROPOSAL.md"
+            "url": "file:///Users/usuario/.claude/skills/mcp-sentinel/docs/V3-PROPOSAL.md"
           },
           {
             "title": "CVE-2025-66032: GMO Flatt Command Injection Evasion Techniques",
@@ -785,7 +785,7 @@
           },
           {
             "title": "MCP Sentinel: Allowlist loading & path/domain matching (existing code)",
-            "url": "file:///Users/rafaeltunonsanchez/.claude/skills/mcp-sentinel/hooks/sentinel_preflight.py"
+            "url": "file:///Users/usuario/.claude/skills/mcp-sentinel/hooks/sentinel_preflight.py"
           },
           {
             "title": "Norton 360: Product Manual (Exclusions section)",
@@ -807,7 +807,7 @@
         "sources": [
           {
             "title": "MCP Sentinel config_scan.py (--json output)",
-            "url": "file:///Users/rafaeltunonsanchez/.claude/skills/mcp-sentinel/tools/config_scan.py"
+            "url": "file:///Users/usuario/.claude/skills/mcp-sentinel/tools/config_scan.py"
           },
           {
             "title": "CrowdStrike: Endpoint Detection & Response (EDR dashboard/console overview)",
@@ -829,7 +829,7 @@
         "sources": [
           {
             "title": "V3-PROPOSAL.md: [P2] Data-flow cross-tool/cross-server en PostToolUse",
-            "url": "file:///Users/rafaeltunonsanchez/.claude/skills/mcp-sentinel/docs/V3-PROPOSAL.md"
+            "url": "file:///Users/usuario/.claude/skills/mcp-sentinel/docs/V3-PROPOSAL.md"
           },
           {
             "title": "CrowdStrike Falcon: Advanced Threat Detection Prowess (data causality)",
@@ -855,7 +855,7 @@
         "sources": [
           {
             "title": "V3-PROPOSAL.md: [P1] Escáner estático de redirección de endpoints y proxy",
-            "url": "file:///Users/rafaeltunonsanchez/.claude/skills/mcp-sentinel/docs/V3-PROPOSAL.md"
+            "url": "file:///Users/usuario/.claude/skills/mcp-sentinel/docs/V3-PROPOSAL.md"
           },
           {
             "title": "CrowdStrike Falcon: Threat Intelligence & Endpoint Verification",
