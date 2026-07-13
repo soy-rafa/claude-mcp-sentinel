@@ -4,7 +4,7 @@ Security agent for Claude Code and Cowork. **v2 blocks malicious tool calls in r
 
 **Author:** Rafael Tunón Sánchez ([@soy-rafa](https://github.com/soy-rafa))
 **License:** [MIT](./LICENSE)
-**Latest version:** 2.0, April 2026 ([changelog](./CHANGELOG.md))
+**Latest version:** 3.1.1, July 2026 ([changelog](./CHANGELOG.md))
 
 > **Not affiliated** with Microsoft Sentinel, SentinelOne, Redis Sentinel, HashiCorp Sentinel, or any other product that has "Sentinel" in its name. This is an independent, open-source security skill for Claude Code. "Sentinel" is a common term in security; see [Trademarks](#trademarks).
 

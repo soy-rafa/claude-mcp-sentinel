@@ -1,6 +1,6 @@
 ---
 name: mcp-sentinel
-version: "3.1.0"
+version: "3.1.1"
 description: >
   Security monitoring agent for Claude Skills and MCP servers. Real-time protection layer
   (PreToolUse hook, zero LLM cost by default): hard-blocks confirmed-malicious tool calls

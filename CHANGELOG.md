@@ -78,6 +78,27 @@ Segunda tanda (esfuerzo M) cerrada también:
 
 Suite 108/108, precisión FP=0/91, red-team 69/0/0.
 
+## [3.1.1] - 2026-07-13: fixes de instalación
+
+Parche de mantenimiento sobre los instaladores. Sin cambios en la capa de detección.
+
+- **Hook `SessionStart` duplicado (#10)**: `install_hooks.sh` escribía la ruta del
+  escáner de config con un `../` sin resolver y deduplicaba comparando el comando como
+  texto exacto, así que no reconocía la entrada dejada por el instalador Python (ruta ya
+  normalizada) y añadía una segunda. El escaneo de config pasaba a correr dos veces por
+  sesión. Ahora `install_hooks.sh` normaliza la ruta y deduplica por nombre de script,
+  igual que `install_hooks.py`: los dos instaladores coinciden sea cual sea la ortografía
+  de la ruta, y una reinstalación normal limpia por sí sola un duplicado preexistente (ya
+  no hace falta desinstalar y reinstalar). Gracias a @rjaguilar22 por el diagnóstico.
+- **Instalación en Windows (#9, #3)**: `SKILL.md` mandaba a WSL a los usuarios de Windows,
+  cuando desde v3 ya existe `install_hooks.py` (solo librería estándar de Python, sin bash
+  ni jq). Documentada la vía nativa de Windows y corregido el recuento de hooks (son tres:
+  PreToolUse, PostToolUse y el escaneo de config en SessionStart).
+- **Test**: nuevo test de regresión cross-installer (sembrar con el instalador Python y
+  luego correr el de shell debe dejar una sola entrada de `config_scan`).
+
+Suite 120/120, precisión FP=0/91, red-team 0 misses / 0 FP.
+
 ## [3.1.0] - 2026-06-29: endurecimiento red-team
 
 > Noche autónoma de red-team (equipo rojo): una batería de "skills maliciosas"
