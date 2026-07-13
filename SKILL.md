@@ -125,9 +125,17 @@ Project scope only:
 bash hooks/install_hooks.sh --project
 ```
 
-The installer is idempotent, validates existing JSON, keeps a timestamped backup of
-`settings.json`, registers both hooks (PreToolUse + PostToolUse), and preserves any other
-hooks the user already has.
+On native Windows, or any box without bash and `jq`, use the cross-platform installer
+instead (Python stdlib only, no external tools):
+
+```bash
+python hooks/install_hooks.py --user      # or --project; --uninstall to remove
+```
+
+Both installers are idempotent, validate existing JSON, keep a timestamped backup of
+`settings.json`, register all three hooks (PreToolUse + PostToolUse + a SessionStart
+config scan), and preserve any other hooks the user already has. They dedup Sentinel's
+own entries by script filename, so mixing the two never double-registers a hook.
 
 ### Allowlisting false positives
 
@@ -660,12 +668,13 @@ This skill works in both Claude Code (terminal) and Cowork (desktop). It uses:
 - **Bash**: for file discovery and any scripting needs
 - **Glob/Grep**: for finding skill and MCP configuration files
 
-The v2 runtime hook additionally requires:
+The runtime hook additionally requires:
 - **Python 3**: to execute `hooks/sentinel_preflight.py`
-- **jq**: used by `hooks/install_hooks.sh` to safely patch `settings.json`
+- **jq**: only for the bash installer `hooks/install_hooks.sh`, to safely patch `settings.json`
 
-Both are available by default on macOS (jq via Homebrew) and most Linux distros. Windows users
-can run under WSL. If either is missing, the installer explains what to install.
+macOS and most Linux distros ship both by default (jq via Homebrew). On native Windows, skip
+bash and jq entirely and use `python hooks/install_hooks.py --user` (Python stdlib only, no WSL
+needed). If jq is missing on a Unix box, the bash installer explains what to install.
 
 No external dependencies or API keys required. Everything runs through Claude's built-in tools
 plus local Python for the hook. No network requests are made by the hook itself.
@@ -680,7 +689,8 @@ mcp-sentinel/
 ├── LICENSE                          # MIT
 ├── hooks/                           # v2 runtime protection
 │   ├── sentinel_preflight.py        # the PreToolUse hook
-│   ├── install_hooks.sh             # register the hook in settings.json
+│   ├── install_hooks.sh             # register the hooks in settings.json (bash + jq)
+│   ├── install_hooks.py             # cross-platform installer (stdlib, native Windows)
 │   ├── uninstall_hooks.sh           # remove the hook
 │   └── README.md                    # hook-specific docs
 ├── references/
