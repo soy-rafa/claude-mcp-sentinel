@@ -735,6 +735,39 @@ def main():
                          and foreign_kept
                          and _count(du, "PreToolUse", "sentinel_preflight.py") == 0))
 
+    # ---- CROSS-INSTALLER DEDUP (issue #10) ----------------------------------
+    # The shell installer used to compare command strings for exact equality and
+    # spelled its path with an unresolved ../, so it failed to recognise the entry
+    # install_hooks.py had written (normalized path) and appended a duplicate
+    # SessionStart hook. Both installers must now agree: after .py then .sh there is
+    # exactly one config_scan entry, foreign hooks survive, and no duplicate remains.
+    import shutil as _shutil
+    sh_installer = HOOKS / "install_hooks.sh"
+    if _shutil.which("bash") and _shutil.which("jq") and sh_installer.exists():
+        proj = Path(tmpdir) / "xinstall"
+        (proj / ".claude").mkdir(parents=True)
+        settings = proj / ".claude" / "settings.json"
+        seed = ih.install(settings, interp="python3")  # what install_hooks.py writes
+        seed.setdefault("hooks", {}).setdefault("PreToolUse", []).append(
+            {"matcher": "", "hooks": [{"type": "command", "command": "node gitnexus-hook.js"}]})
+        settings.write_text(json.dumps(seed))
+        res_sh = subprocess.run(["bash", str(sh_installer), "--project"], cwd=str(proj),
+                                capture_output=True, text=True)
+        after_sh = json.loads(settings.read_text()) if settings.exists() else {}
+        foreign_sh = any("gitnexus" in (h.get("command") or "")
+                         for e in after_sh.get("hooks", {}).get("PreToolUse", [])
+                         for h in e.get("hooks", []))
+        ok_sh = (res_sh.returncode == 0
+                 and _count(after_sh, "SessionStart", "config_scan.py") == 1  # not doubled
+                 and _count(after_sh, "PreToolUse", "sentinel_preflight.py") == 1
+                 and foreign_sh)
+        if not ok_sh and res_sh.returncode != 0:
+            print(res_sh.stderr)
+        results.append(check("installer(sh): dedups .py's SessionStart by filename (no duplicate), keeps foreign",
+                             ok_sh))
+    else:
+        print("… skipped installer(sh) cross-dedup test (needs bash + jq)")
+
     # ---- ADAPTIVE TRUST: suggest from repeated asks (B) ---------------------
     sug_state = Path(tmpdir) / "suggest-state"
     os.environ["SENTINEL_STATE_DIR"] = str(sug_state)

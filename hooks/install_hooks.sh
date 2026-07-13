@@ -17,7 +17,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PRE_PATH="$SCRIPT_DIR/sentinel_preflight.py"
 POST_PATH="$SCRIPT_DIR/sentinel_postflight.py"
-SCAN_PATH="$SCRIPT_DIR/../tools/config_scan.py"
+# Normalize away the ../ so the written command matches what install_hooks.py emits
+# (it resolves via pathlib). Fall back to the literal path if tools/ is missing, so
+# the -f existence check below still fires the friendly error.
+SCAN_PATH="$(cd "$SCRIPT_DIR/../tools" 2>/dev/null && pwd || echo "$SCRIPT_DIR/../tools")/config_scan.py"
 SCOPE="user"
 
 for arg in "$@"; do
@@ -77,29 +80,33 @@ POST_COMMAND="python3 \"$POST_PATH\""
 SCAN_COMMAND="python3 \"$SCAN_PATH\" --session"
 
 # Add or replace all three hooks. Any existing non-Sentinel hooks (e.g. gitnexus)
-# are preserved, we only drop prior entries whose command matches ours.
+# are preserved. Prior Sentinel entries are matched by script FILENAME, not by exact
+# command string, so a duplicate never appears regardless of how the path was spelled
+# (e.g. an entry left by install_hooks.py). This mirrors install_hooks.py's dedup and
+# lets a plain re-run of this installer clean up any earlier duplicate on its own.
 TMP="$(mktemp)"
-jq --arg pre "$PRE_COMMAND" --arg post "$POST_COMMAND" --arg scan "$SCAN_COMMAND" '
+jq --arg pre "$PRE_COMMAND" --arg post "$POST_COMMAND" --arg scan "$SCAN_COMMAND" \
+   --arg prefn "sentinel_preflight.py" --arg postfn "sentinel_postflight.py" --arg scanfn "config_scan.py" '
   .hooks //= {}
   | .hooks.PreToolUse //= []
   | .hooks.PostToolUse //= []
   | .hooks.SessionStart //= []
   | .hooks.PreToolUse |= (
-      map(select(.hooks[]?.command != $pre))    # remove any stale Sentinel preflight
+      map(select(any(.hooks[]?; (.command // "") | contains($prefn)) | not))   # drop any prior Sentinel preflight
       + [{
           matcher: "",
           hooks: [{type: "command", command: $pre}]
         }]
     )
   | .hooks.PostToolUse |= (
-      map(select(.hooks[]?.command != $post))   # remove any stale Sentinel postflight
+      map(select(any(.hooks[]?; (.command // "") | contains($postfn)) | not))  # drop any prior Sentinel postflight
       + [{
           matcher: "",
           hooks: [{type: "command", command: $post}]
         }]
     )
   | .hooks.SessionStart |= (
-      map(select(.hooks[]?.command != $scan))   # remove any stale Sentinel config scan
+      map(select(any(.hooks[]?; (.command // "") | contains($scanfn)) | not))  # drop any prior Sentinel config scan
       + [{
           hooks: [{type: "command", command: $scan}]
         }]
